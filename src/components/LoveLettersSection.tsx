@@ -210,14 +210,15 @@ export const LoveLettersSection: React.FC<LoveLettersSectionProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm('Deseja apagar esta carta?')) {
+                      if (window.confirm('Deseja apagar esta carta de amor?')) {
+                        soundManager.playPop();
                         onDeleteLetter(letter.id);
                       }
                     }}
-                    className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-400 hover:text-rose-600 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950/70 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                     title="Excluir carta"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -234,6 +235,7 @@ export const LoveLettersSection: React.FC<LoveLettersSectionProps> = ({
           onClose={() => setSelectedLetter(null)}
           onMarkRead={onMarkRead}
           onOpenReply={handleReply}
+          onDeleteLetter={onDeleteLetter}
           speechEnabled={speechEnabled}
         />
       )}

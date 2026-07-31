@@ -189,11 +189,11 @@ export const CaregiverJournal: React.FC<CaregiverJournalProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                Diário de Recados & Orientações da Cuidadora
-                <Sparkles className="w-5 h-5 text-amber-500 dark:text-amber-300" />
+                Diário do Casal & Recados • Dhyon & Mooniy 📓
+                <Sparkles className="w-5 h-5 text-amber-500 dark:text-amber-300 animate-pulse" />
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-teal-100/90 font-medium max-w-2xl mt-0.5">
-                Leia o que sua cuidadora espera de você no dia a dia, e escreva também como está se sentindo ou o que precisa. Uma ponte de carinho e comunicação contínua!
+                Espaço de diário diário, orientações e recados para Dhyon e Mooniy. Escrevam seus pensamentos, sentimentos ou acompanhamentos do dia a dia com carinho e apoio mútuo!
               </p>
             </div>
           </div>

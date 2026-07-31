@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, X, Sparkles, Volume2, Play, Pause, Video, Camera, Mic, Share2, Mail, CheckCircle2, Lock } from 'lucide-react';
+import { Heart, X, Sparkles, Volume2, Play, Pause, Video, Camera, Mic, Share2, Mail, CheckCircle2, Lock, Trash2 } from 'lucide-react';
 import { LoveLetter, UserProfile } from '../types';
 import { soundManager } from '../utils/sound';
 
@@ -8,6 +8,7 @@ interface LoveLetterModalProps {
   onClose: () => void;
   onMarkRead: (letterId: string) => void;
   onOpenReply?: (letter: LoveLetter) => void;
+  onDeleteLetter?: (letterId: string) => void;
   speechEnabled: boolean;
   isAutoPopup?: boolean;
 }
@@ -17,6 +18,7 @@ export const LoveLetterModal: React.FC<LoveLetterModalProps> = ({
   onClose,
   onMarkRead,
   onOpenReply,
+  onDeleteLetter,
   speechEnabled,
   isAutoPopup = false
 }) => {
@@ -462,6 +464,24 @@ export const LoveLetterModal: React.FC<LoveLetterModalProps> = ({
                   >
                     <Mail className="w-4 h-4" />
                     Responder 💌
+                  </button>
+                )}
+
+                {onDeleteLetter && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Deseja realmente apagar esta carta de amor?')) {
+                        soundManager.playPop();
+                        onDeleteLetter(letter.id);
+                        onClose();
+                      }
+                    }}
+                    className="flex-1 sm:flex-none px-3 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-200 dark:border-rose-800 cursor-pointer transition-colors"
+                    title="Excluir esta carta"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    Apagar Carta
                   </button>
                 )}
 

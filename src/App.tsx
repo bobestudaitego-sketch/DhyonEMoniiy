@@ -483,7 +483,7 @@ export default function App() {
             }`}
           >
             <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-300" />
-            Diário da Cuidadora & Recados
+            Diário Dhyon & Mooniy 📓
             {journalEntries.filter(e => !e.readByOther && e.authorType === 'caregiver_to_user').length > 0 && (
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
             )}
