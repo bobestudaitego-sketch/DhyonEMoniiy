@@ -53,8 +53,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   // Helper: Check if an item matches a date (including recurring rules)
   const isItemForDate = (item: ScheduleItem, targetDate: string) => {
     if (item.date === targetDate) return true;
-    if (item.recurring === 'daily' && targetDate >= item.date) return true;
-    if (item.recurring === 'weekly' && targetDate >= item.date) {
+    // Daily tasks apply to all days!
+    if (item.recurring === 'daily') return true;
+    if (item.recurring === 'weekly') {
       try {
         const itemDay = new Date(item.date + 'T00:00:00').getDay();
         const targetDay = new Date(targetDate + 'T00:00:00').getDay();
@@ -406,6 +407,62 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           {showAllDates ? 'Ver Apenas Esta Data' : '📅 Ver Todas as Datas'}
         </button>
       </div>
+
+      {/* COMPONENTE: Painel Destacado de Tarefas Concluídas no Dia */}
+      {completedCount > 0 && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-linear-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-400 dark:border-emerald-700 shadow-sm space-y-3 animate-fade-in">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-emerald-200/80 dark:border-emerald-800/80 pb-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-600 text-white font-bold shadow-xs">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  Tarefas Concluídas em {selectedDate === today ? 'Hoje' : formatPortugueseDate(selectedDate)}! 🎉
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-xs font-black">
+                    {completedCount} de {totalCount}
+                  </span>
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-emerald-200">
+                  Visível para Dhyon e para a Cuidadora (Mooniy) para acompanhamento em tempo real.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+            {dayItems.filter(i => i.completed).map(completedItem => (
+              <div
+                key={`comp-card-${completedItem.id}`}
+                className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800/80 shadow-2xs flex items-center justify-between gap-2"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="p-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 shrink-0">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block truncate line-through">
+                      {completedItem.title}
+                    </span>
+                    <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 block">
+                      ⏰ Horário: {completedItem.startTime} {completedItem.completedAt ? `• Feito às ${completedItem.completedAt}` : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onToggleComplete(completedItem.id)}
+                  className="px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold shrink-0 cursor-pointer"
+                  title="Desfazer conclusão"
+                >
+                  Desfazer
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Schedule Timeline List */}
       {sortedItems.length === 0 ? (

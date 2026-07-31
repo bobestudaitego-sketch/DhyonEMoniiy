@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Plus, Clock, Pill, Stethoscope, Globe, Music, Image as ImageIcon, AlertCircle, Link as LinkIcon, Heart, Sparkles, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Plus, Clock, Pill, Stethoscope, Globe, Music, Image as ImageIcon, AlertCircle, Link as LinkIcon, Heart, Sparkles, Check, Upload, FolderOpen } from 'lucide-react';
 import { ScheduleItem, ItemCategory, UserProfile } from '../types';
 import { getTodayDateString, getCurrentTimeString } from '../utils/date';
 
@@ -20,15 +20,14 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   defaultCategory = 'routine',
   selectedDate = getTodayDateString()
 }) => {
-  if (!isOpen) return null;
-
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [category, setCategory] = useState<ItemCategory>(
     (defaultCategory as ItemCategory) || 'routine'
   );
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState(selectedDate);
-  const [startTime, setStartTime] = useState('12:00');
+  const [date, setDate] = useState(selectedDate || getTodayDateString());
+  const [startTime, setStartTime] = useState(getCurrentTimeString().slice(0, 5) || '12:00');
   const [endTime, setEndTime] = useState('12:30');
   const [medicalNote, setMedicalNote] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
@@ -36,6 +35,43 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   const [imageUrl, setImageUrl] = useState('');
   const [important, setImportant] = useState(false);
   const [recurring, setRecurring] = useState<'none' | 'daily' | 'weekly'>('none');
+
+  // Reset form fields whenever modal opens to prevent stale values/dates
+  useEffect(() => {
+    if (isOpen) {
+      setCategory((defaultCategory as ItemCategory) || 'routine');
+      setTitle('');
+      setDescription('');
+      setDate(selectedDate || getTodayDateString());
+      setStartTime(getCurrentTimeString().slice(0, 5) || '12:00');
+      setEndTime('');
+      setMedicalNote('');
+      setLinkUrl('');
+      setMusicUrl('');
+      setImageUrl('');
+      setImportant(false);
+      setRecurring('none');
+    }
+  }, [isOpen, selectedDate, defaultCategory]);
+
+  if (!isOpen) return null;
+
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) setImageUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Preset sample image pickers for convenience
   const presetImages = [
@@ -297,27 +333,62 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             </div>
           )}
 
-          {/* Image URL & Presets */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Link de Imagem / Foto
-            </label>
+          {/* Image Upload & URL */}
+          <div className="space-y-2.5 p-3.5 rounded-2xl bg-indigo-50/50 dark:bg-slate-800/50 border border-indigo-100 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-rose-500" />
+                Imagem / Foto da Atividade
+              </label>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-amber-200" />
+                📁 Escolher do PC
+              </button>
+            </div>
+
             <input
-              type="url"
-              placeholder="https://images.unsplash.com/..."
-              value={imageUrl}
-              onChange={e => setImageUrl(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageFileUpload}
+              accept="image/*"
+              className="hidden"
             />
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              <span className="text-[11px] font-bold text-slate-500 self-center">Escolher Imagem Exemplo:</span>
+            {imageUrl && (
+              <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-black">
+                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl('')}
+                  className="absolute top-2 right-2 p-1 rounded-full bg-slate-900/80 text-white hover:bg-rose-600 cursor-pointer"
+                  title="Remover imagem"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            <input
+              type="url"
+              placeholder="Ou cole a URL da imagem (https://...)..."
+              value={imageUrl}
+              onChange={e => setImageUrl(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-mono"
+            />
+
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <span className="text-[10px] font-bold text-slate-500 self-center">Exemplos:</span>
               {presetImages.map(preset => (
                 <button
                   type="button"
                   key={preset.label}
                   onClick={() => setImageUrl(preset.url)}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium"
+                  className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-medium border border-slate-200 dark:border-slate-700 cursor-pointer"
                 >
                   {preset.label}
                 </button>

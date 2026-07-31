@@ -21,8 +21,8 @@ export const NowBanner: React.FC<NowBannerProps> = ({ items, onToggleComplete, s
     return () => clearInterval(timer);
   }, []);
 
-  // Filter today's items
-  const todaysItems = items.filter(item => item.date === today && !item.completed);
+  // Filter today's items (including daily recurring tasks)
+  const todaysItems = items.filter(item => (item.date === today || item.recurring === 'daily') && !item.completed);
   
   // Find item active right now
   const activeNowItem = todaysItems.find(item => isItemActiveNow(item.startTime, item.endTime, currentTimeStr));

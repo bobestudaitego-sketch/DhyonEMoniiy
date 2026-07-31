@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Heart, X, Sparkles, Mic, Square, Play, Pause, Camera, Video, Type, Palette, FileText, Check, Music, Eye, Smile } from 'lucide-react';
+import { Heart, X, Sparkles, Mic, Square, Play, Pause, Camera, Video, Type, Palette, FileText, Check, Music, Eye, Smile, Upload, FolderOpen } from 'lucide-react';
 import { LoveLetter, LetterPaperStyle, LetterFontFamily, LetterThemeColor, LetterFontColor, LetterBgColor, UserProfile } from '../types';
 import { LoveLetterModal } from './LoveLetterModal';
 import { soundManager } from '../utils/sound';
@@ -40,6 +40,24 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
   const [photoUrl, setPhotoUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
+  const photoFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handlePhotoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) setPhotoUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Preview state
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -582,21 +600,40 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
 
           {/* Attach Photo & Video Links */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                <Camera className="w-3.5 h-3.5 text-rose-500" />
-                Link de Foto (URL):
-              </label>
+            <div className="space-y-1.5 p-3 rounded-2xl bg-rose-50/50 dark:bg-slate-800/50 border border-rose-200/50 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Camera className="w-3.5 h-3.5 text-rose-500" />
+                  Anexar Foto da Carta:
+                </label>
+                <button
+                  type="button"
+                  onClick={() => photoFileInputRef.current?.click()}
+                  className="px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs cursor-pointer"
+                >
+                  <FolderOpen className="w-3 h-3" />
+                  📁 Foto do PC
+                </button>
+              </div>
+
+              <input
+                type="file"
+                ref={photoFileInputRef}
+                onChange={handlePhotoFileUpload}
+                accept="image/*"
+                className="hidden"
+              />
+
               <input
                 type="url"
                 value={photoUrl}
                 onChange={e => setPhotoUrl(e.target.value)}
-                placeholder="https://exemplo.com/foto.jpg"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                placeholder="https://exemplo.com/foto.jpg ou foto carregada"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 p-3 rounded-2xl bg-indigo-50/50 dark:bg-slate-800/50 border border-indigo-100 dark:border-slate-700">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
                 <Video className="w-3.5 h-3.5 text-rose-500" />
                 Link de Vídeo (YouTube/URL):
@@ -606,7 +643,7 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
                 value={videoUrl}
                 onChange={e => setVideoUrl(e.target.value)}
                 placeholder="https://youtube.com/watch?v=..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
               />
             </div>
           </div>
