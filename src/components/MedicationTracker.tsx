@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pill, Stethoscope, Clock, CheckCircle2, AlertCircle, Plus, Calendar, MapPin, ExternalLink, ShieldCheck, Volume2 } from 'lucide-react';
+import { Pill, Stethoscope, Clock, CheckCircle2, AlertCircle, Plus, Calendar, MapPin, ExternalLink, ShieldCheck, Volume2, Trash2 } from 'lucide-react';
 import { ScheduleItem, UserProfile } from '../types';
 import { soundManager } from '../utils/sound';
 
@@ -8,6 +8,7 @@ interface MedicationTrackerProps {
   currentProfile: UserProfile;
   onToggleComplete: (itemId: string) => void;
   onOpenAddItem: (presetCategory?: string) => void;
+  onDeleteItem?: (itemId: string) => void;
   speechEnabled: boolean;
 }
 
@@ -16,6 +17,7 @@ export const MedicationTracker: React.FC<MedicationTrackerProps> = ({
   currentProfile,
   onToggleComplete,
   onOpenAddItem,
+  onDeleteItem,
   speechEnabled
 }) => {
   const medicalItems = items.filter(item => item.category === 'medication' || item.category === 'medical');
@@ -131,15 +133,29 @@ export const MedicationTracker: React.FC<MedicationTrackerProps> = ({
                     Cadastrado por: {item.createdBy}
                   </span>
 
-                  {speechEnabled && (
-                    <button
-                      onClick={() => soundManager.speak(`Remédio ${item.title} às ${item.startTime}. ${item.medicalNote || item.description}`)}
-                      className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600"
-                      title="Ouvir instruções"
-                    >
-                      <Volume2 className="w-4 h-4 text-indigo-500" />
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {speechEnabled && (
+                      <button
+                        onClick={() => soundManager.speak(`Remédio ${item.title} às ${item.startTime}. ${item.medicalNote || item.description}`)}
+                        className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 cursor-pointer"
+                        title="Ouvir instruções"
+                      >
+                        <Volume2 className="w-4 h-4 text-indigo-500" />
+                      </button>
+                    )}
+                    {onDeleteItem && (
+                      <button
+                        onClick={() => {
+                          soundManager.playPop();
+                          onDeleteItem(item.id);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                        title="Excluir remédio"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -178,20 +194,35 @@ export const MedicationTracker: React.FC<MedicationTrackerProps> = ({
                       {item.date} - {item.startTime} até {item.endTime || '15:00'}
                     </span>
 
-                    <button
-                      onClick={() => {
-                        onToggleComplete(item.id);
-                        if (!item.completed) soundManager.playSuccessChime();
-                      }}
-                      className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 ${
-                        item.completed
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-blue-600 text-white hover:bg-blue-500'
-                      }`}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      {item.completed ? 'Realizado' : 'Concluir'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          onToggleComplete(item.id);
+                          if (!item.completed) soundManager.playSuccessChime();
+                        }}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+                          item.completed
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-blue-600 text-white hover:bg-blue-500'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        {item.completed ? 'Realizado' : 'Concluir'}
+                      </button>
+
+                      {onDeleteItem && (
+                        <button
+                          onClick={() => {
+                            soundManager.playPop();
+                            onDeleteItem(item.id);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                          title="Excluir consulta"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <h4 className="text-base font-bold text-slate-900 dark:text-white">

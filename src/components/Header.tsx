@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Sun, Moon, Eye, Volume2, VolumeX, User, ShieldCheck, Settings, Sparkles, Type } from 'lucide-react';
+import { Clock, Sun, Moon, Eye, Volume2, VolumeX, User, ShieldCheck, Settings, Sparkles, Type, LogOut, Heart, HeartHandshake } from 'lucide-react';
 import { UserProfile, AppSettings, SensoryTheme, FontSizeOption } from '../types';
 import { getCurrentTimeString, formatPortugueseDate } from '../utils/date';
+import { ProfileAvatar } from './ProfileAvatar';
 
 interface HeaderProps {
   currentProfile: UserProfile;
@@ -11,6 +12,7 @@ interface HeaderProps {
   onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
   onOpenSettingsModal: () => void;
   onOpenProfileModal: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,7 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   settings,
   onUpdateSettings,
   onOpenSettingsModal,
-  onOpenProfileModal
+  onOpenProfileModal,
+  onLogout
 }) => {
   const [timeStr, setTimeStr] = useState(getCurrentTimeString(new Date(), true));
   const todayDateStr = new Date().toISOString().split('T')[0];
@@ -31,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const cycleTheme = () => {
-    const themes: SensoryTheme[] = ['soft-light', 'soft-blue', 'calm-dark', 'high-contrast'];
+    const themes: SensoryTheme[] = ['soft-light', 'soft-rose', 'soft-blue', 'calm-dark', 'high-contrast'];
     const currentIndex = themes.indexOf(settings.sensoryTheme);
     const nextTheme = themes[(currentIndex + 1) % themes.length];
     onUpdateSettings({ sensoryTheme: nextTheme });
@@ -45,9 +48,10 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const themeLabelMap: Record<SensoryTheme, string> = {
-    'soft-light': 'Cores Calmas',
-    'soft-blue': 'Tons de Azul',
-    'calm-dark': 'Modo Escuro Relaxante',
+    'soft-light': 'Pastel Creme',
+    'soft-rose': 'Pastel Rosa',
+    'soft-blue': 'Pastel Azul',
+    'calm-dark': 'Escuro Relaxante',
     'high-contrast': 'Alto Contraste'
   };
 
@@ -58,19 +62,24 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Title & Date */}
           <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2.5 rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 flex items-center justify-center shadow-xs">
-                <Sparkles className="w-6 h-6 animate-pulse" />
+            <div className="flex items-center gap-3">
+              <div className="relative p-2.5 rounded-2xl bg-gradient-to-tr from-rose-500 via-pink-500 to-amber-400 text-white flex items-center justify-center shadow-md shadow-rose-500/20 group hover:scale-105 transition-transform">
+                <Heart className="w-6 h-6 fill-white text-white animate-pulse" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-200 absolute -top-1 -right-1 animate-spin" style={{ animationDuration: '4s' }} />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                  Dhyon e Mooniy
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span>Dhyon</span>
+                  <Heart className="w-4 h-4 fill-rose-500 text-rose-500 animate-pulse" />
+                  <span>Mooniy</span>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-rose-500/15 via-pink-500/15 to-amber-500/15 text-rose-700 dark:text-rose-300 border border-rose-300/40 dark:border-rose-700/50 flex items-center gap-1 shadow-2xs">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
                     Meu Dia Seguro
                   </span>
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 capitalize font-medium">
-                  {formatPortugueseDate(todayDateStr)}
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 capitalize font-medium flex items-center gap-1.5">
+                  <span>{formatPortugueseDate(todayDateStr)}</span>
+                  <span className="text-rose-400 font-bold">• Amor & Cuidado 💕</span>
                 </p>
               </div>
             </div>
@@ -153,11 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
                   : 'bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-950/80 dark:border-indigo-800 dark:text-indigo-200 hover:bg-indigo-100'
               }`}
             >
-              <img
-                src={currentProfile.avatar}
-                alt={currentProfile.name}
-                className="w-7 h-7 rounded-full object-cover border border-white dark:border-slate-800"
-              />
+              <ProfileAvatar avatar={currentProfile.avatar} name={currentProfile.name} size="sm" />
               <div className="text-left hidden xs:block">
                 <div className="text-xs font-bold leading-none flex items-center gap-1">
                   {currentProfile.name}
@@ -169,6 +174,18 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <User className="w-4 h-4 xs:hidden" />
             </button>
+
+            {/* Logout / Lock Button */}
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                title="Sair / Bloquear Tela de Login"
+                className="p-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-900 transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-xs font-bold hidden md:inline">Sair</span>
+              </button>
+            )}
 
           </div>
 

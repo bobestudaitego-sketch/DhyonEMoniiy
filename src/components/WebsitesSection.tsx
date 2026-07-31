@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink, Globe, Plus, Trash2, Edit3, ShieldCheck, Heart } from 'lucide-react';
 import { ScheduleItem, UserProfile } from '../types';
+import { soundManager } from '../utils/sound';
 
 interface WebsitesSectionProps {
   items: ScheduleItem[];
@@ -89,15 +90,16 @@ export const WebsitesSection: React.FC<WebsitesSectionProps> = ({
                     {item.title}
                   </h3>
 
-                  {currentProfile.role === 'helper' && (
-                    <button
-                      onClick={() => onDeleteItem(item.id)}
-                      className="text-slate-400 hover:text-rose-500 p-1 rounded-lg transition-colors"
-                      title="Excluir site"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      soundManager.playPop();
+                      onDeleteItem(item.id);
+                    }}
+                    className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    title="Excluir site"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
 
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4 line-clamp-3">

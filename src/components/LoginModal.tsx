@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { User, ShieldCheck, KeyRound, Check, X, Sparkles, Heart } from 'lucide-react';
+import { User, ShieldCheck, KeyRound, Check, X, Sparkles, Heart, Palette } from 'lucide-react';
+import { ProfileAvatar } from './ProfileAvatar';
+import { AvatarPickerModal } from './AvatarPickerModal';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -8,6 +10,7 @@ interface LoginModalProps {
   profiles: UserProfile[];
   currentProfile: UserProfile;
   onSelectProfile: (profileId: string) => void;
+  onSelectAvatar?: (profileId: string, newAvatar: string) => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
@@ -15,25 +18,44 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   profiles,
   currentProfile,
-  onSelectProfile
+  onSelectProfile,
+  onSelectAvatar
 }) => {
   if (!isOpen) return null;
 
   const [selectedProfileId, setSelectedProfileId] = useState<string>(currentProfile.id);
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<boolean>(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState<boolean>(false);
 
   const selectedProfile = profiles.find(p => p.id === selectedProfileId) || currentProfile;
 
   const handleConfirmSwitch = () => {
-    if (selectedProfile.role === 'helper' && selectedProfile.pin) {
-      if (pinInput !== selectedProfile.pin && pinInput !== '1234') {
+    const isDhyon = selectedProfile.name.toLowerCase().includes('dhyon');
+    const isMooniy = selectedProfile.name.toLowerCase().includes('mooniy') || selectedProfile.role === 'helper';
+
+    if (isDhyon) {
+      const validPin = selectedProfile.pin || '32115321';
+      if (pinInput !== validPin && pinInput !== '32115321') {
+        setPinError(true);
+        return;
+      }
+    } else if (isMooniy) {
+      const validPin = selectedProfile.pin || '12345';
+      if (pinInput !== validPin && pinInput !== '12345' && pinInput !== '1234') {
+        setPinError(true);
+        return;
+      }
+    } else if (selectedProfile.pin) {
+      if (pinInput !== selectedProfile.pin) {
         setPinError(true);
         return;
       }
     }
-    
+
     onSelectProfile(selectedProfile.id);
+    setPinInput('');
+    setPinError(false);
     onClose();
   };
 
@@ -63,6 +85,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
         {/* Profile Cards */}
         <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Perfis Registrados</span>
+            {onSelectAvatar && (
+              <button
+                type="button"
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Palette className="w-3.5 h-3.5" />
+                Trocar Ícone ({selectedProfile.name})
+              </button>
+            )}
+          </div>
+
           {profiles.map(profile => {
             const isSelected = profile.id === selectedProfileId;
             const isCurrent = profile.id === currentProfile.id;
@@ -81,11 +117,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-3.5">
-                  <img
-                    src={profile.avatar}
-                    alt={profile.name}
-                    className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                  />
+                  <ProfileAvatar avatar={profile.avatar} name={profile.name} size="md" />
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                       {profile.name}
@@ -113,12 +145,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           })}
         </div>
 
-        {/* PIN input if Helper profile selected */}
-        {selectedProfile.role === 'helper' && selectedProfile.pin && (
+        {/* PIN / Password Input */}
+        {selectedProfile && (
           <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-2">
-            <label className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-              <KeyRound className="w-4 h-4 text-amber-600" />
-              Senha de Apoiador (Padrão: 1234)
+            <label className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center justify-between gap-1.5">
+              <span className="flex items-center gap-1.5">
+                <KeyRound className="w-4 h-4 text-amber-600" />
+                Senha de Acesso ({selectedProfile.name})
+              </span>
             </label>
             <input
               type="password"
@@ -128,11 +162,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 setPinInput(e.target.value);
                 setPinError(false);
               }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleConfirmSwitch();
+              }}
               className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-mono font-bold"
+              autoFocus
             />
             {pinError && (
               <p className="text-xs font-bold text-rose-600">
-                Senha incorreta. Tente 1234.
+                Senha incorreta. Por favor, tente novamente.
               </p>
             )}
           </div>
@@ -156,6 +194,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         </div>
 
       </div>
+
+      {onSelectAvatar && (
+        <AvatarPickerModal
+          isOpen={isAvatarModalOpen}
+          onClose={() => setIsAvatarModalOpen(false)}
+          profile={selectedProfile}
+          onSelectAvatar={onSelectAvatar}
+        />
+      )}
     </div>
   );
 };

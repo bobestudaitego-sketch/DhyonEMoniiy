@@ -43,6 +43,7 @@ interface CaregiverJournalProps {
   onToggleRead: (entryId: string) => void;
   onAddReply: (entryId: string, replyText: string) => void;
   onDeleteEntry: (entryId: string) => void;
+  onDeleteReply?: (entryId: string, replyId: string) => void;
   speechEnabled?: boolean;
 }
 
@@ -53,6 +54,7 @@ export const CaregiverJournal: React.FC<CaregiverJournalProps> = ({
   onToggleRead,
   onAddReply,
   onDeleteEntry,
+  onDeleteReply,
   speechEnabled = true
 }) => {
   const [filter, setFilter] = useState<'all' | 'caregiver' | 'user'>('all');
@@ -305,13 +307,14 @@ export const CaregiverJournal: React.FC<CaregiverJournalProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {sortedEntries.map(item => {
+          {sortedEntries.map((item, index) => {
             const isCaregiverNote = item.authorType === 'caregiver_to_user';
 
             return (
               <div
                 key={item.id}
-                className={`rounded-3xl p-5 sm:p-6 border transition-all duration-300 space-y-4 relative overflow-hidden shadow-xs ${
+                style={{ animationDelay: `${Math.min(index * 75, 450)}ms` }}
+                className={`animate-fade-in rounded-3xl p-5 sm:p-6 border transition-all duration-300 space-y-4 relative overflow-hidden shadow-xs ${
                   isCaregiverNote
                     ? 'bg-linear-to-br from-teal-50/70 via-white to-indigo-50/40 dark:from-teal-950/30 dark:via-slate-900 dark:to-indigo-950/20 border-teal-200 dark:border-teal-800/70'
                     : 'bg-linear-to-br from-amber-50/70 via-white to-rose-50/30 dark:from-amber-950/20 dark:via-slate-900 dark:to-rose-950/20 border-amber-200 dark:border-amber-800/70'
@@ -391,16 +394,17 @@ export const CaregiverJournal: React.FC<CaregiverJournalProps> = ({
                       )}
                     </button>
 
-                    {/* Delete button (for helpers or author) */}
-                    {(currentProfile.role === 'helper' || currentProfile.name === item.authorName) && (
-                      <button
-                        onClick={() => onDeleteEntry(item.id)}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
-                        title="Excluir anotação"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    {/* Delete button (for all profiles) */}
+                    <button
+                      onClick={() => {
+                        soundManager.playPop();
+                        onDeleteEntry(item.id);
+                      }}
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                      title="Excluir anotação"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
@@ -430,7 +434,21 @@ export const CaregiverJournal: React.FC<CaregiverJournalProps> = ({
                                 {rep.authorRole === 'helper' ? 'Cuidadora' : 'Usuário'}
                               </span>
                             </span>
-                            <span className="text-[10px]">{rep.createdAt}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px]">{rep.createdAt}</span>
+                              {onDeleteReply && (
+                                <button
+                                  onClick={() => {
+                                    soundManager.playPop();
+                                    onDeleteReply(item.id, rep.id);
+                                  }}
+                                  className="p-0.5 text-slate-400 hover:text-rose-600 rounded-md transition-colors cursor-pointer"
+                                  title="Excluir resposta"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <p className="text-slate-800 dark:text-slate-200 font-medium">
                             {rep.text}

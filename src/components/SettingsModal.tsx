@@ -8,6 +8,7 @@ interface SettingsModalProps {
   settings: AppSettings;
   onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
   onResetData: () => void;
+  onClearAllPosts?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -15,7 +16,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   settings,
   onUpdateSettings,
-  onResetData
+  onResetData,
+  onClearAllPosts
 }) => {
   const [permissionState, setPermissionState] = useState<NotificationPermission>(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -80,35 +82,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             
             <button
               onClick={() => onUpdateSettings({ sensoryTheme: 'soft-light' })}
-              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
+              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                 settings.sensoryTheme === 'soft-light'
-                  ? 'bg-amber-100 border-amber-500 text-amber-950 ring-2 ring-amber-500/30'
+                  ? 'bg-amber-100/80 border-amber-400 text-amber-950 ring-2 ring-amber-500/30'
                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
               }`}
             >
               <span className="flex items-center gap-2">
-                <Sun className="w-4 h-4 text-amber-500" /> Cores Calmas
+                <Sun className="w-4 h-4 text-amber-500" /> Pastel Creme
               </span>
               {settings.sensoryTheme === 'soft-light' && <Check className="w-4 h-4 text-amber-600" />}
             </button>
 
             <button
-              onClick={() => onUpdateSettings({ sensoryTheme: 'soft-blue' })}
-              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
-                settings.sensoryTheme === 'soft-blue'
-                  ? 'bg-blue-100 border-blue-500 text-blue-950 ring-2 ring-blue-500/30'
+              onClick={() => onUpdateSettings({ sensoryTheme: 'soft-rose' })}
+              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                settings.sensoryTheme === 'soft-rose'
+                  ? 'bg-rose-100/80 border-rose-400 text-rose-950 ring-2 ring-rose-500/30'
                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
               }`}
             >
               <span className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-blue-500" /> Tons de Azul
+                <Sparkles className="w-4 h-4 text-rose-500" /> Pastel Rosa
+              </span>
+              {settings.sensoryTheme === 'soft-rose' && <Check className="w-4 h-4 text-rose-600" />}
+            </button>
+
+            <button
+              onClick={() => onUpdateSettings({ sensoryTheme: 'soft-blue' })}
+              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                settings.sensoryTheme === 'soft-blue'
+                  ? 'bg-blue-100/80 border-blue-400 text-blue-950 ring-2 ring-blue-500/30'
+                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-blue-500" /> Pastel Céu
               </span>
               {settings.sensoryTheme === 'soft-blue' && <Check className="w-4 h-4 text-blue-600" />}
             </button>
 
             <button
               onClick={() => onUpdateSettings({ sensoryTheme: 'calm-dark' })}
-              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
+              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                 settings.sensoryTheme === 'calm-dark'
                   ? 'bg-purple-900 border-purple-500 text-white ring-2 ring-purple-500/30'
                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
@@ -118,20 +134,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Moon className="w-4 h-4 text-purple-400" /> Escuro Relaxante
               </span>
               {settings.sensoryTheme === 'calm-dark' && <Check className="w-4 h-4 text-purple-300" />}
-            </button>
-
-            <button
-              onClick={() => onUpdateSettings({ sensoryTheme: 'high-contrast' })}
-              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
-                settings.sensoryTheme === 'high-contrast'
-                  ? 'bg-black text-yellow-300 border-yellow-400 ring-2 ring-yellow-400/50'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-yellow-400" /> Alto Contraste
-              </span>
-              {settings.sensoryTheme === 'high-contrast' && <Check className="w-4 h-4 text-yellow-300" />}
             </button>
 
           </div>
@@ -234,19 +236,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Reset Data */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <button
-            onClick={onResetData}
-            className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold text-xs flex items-center gap-1.5 hover:bg-rose-100 transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Restaurar Dados Exemplo
-          </button>
+        {/* Reset / Clear Data */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {onClearAllPosts && (
+              <button
+                onClick={() => {
+                  if (confirm('Tem certeza que deseja apagar todas as postagens para começar do zero?')) {
+                    onClearAllPosts();
+                    onClose();
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Zerar Postagens
+              </button>
+            )}
+
+            <button
+              onClick={onResetData}
+              className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+              Exemplo
+            </button>
+          </div>
 
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-2xl bg-indigo-600 text-white font-bold text-xs shadow-md"
+            className="px-5 py-2.5 rounded-2xl bg-indigo-600 text-white font-bold text-xs shadow-md cursor-pointer hover:bg-indigo-700 transition-colors"
           >
             Pronto
           </button>

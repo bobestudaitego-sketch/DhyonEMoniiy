@@ -467,15 +467,16 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       </a>
                     )}
 
-                    {currentProfile.role === 'helper' && (
-                      <button
-                        onClick={() => onDeleteItem(item.id)}
-                        className="p-2.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                        title="Excluir item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        soundManager.playPop();
+                        onDeleteItem(item.id);
+                      }}
+                      className="p-2.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      title="Excluir item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                 </div>

@@ -40,7 +40,7 @@ export interface ScheduleItem {
   medicalNote?: string; // e.g., "Tomar com água após o almoço"
 }
 
-export type SensoryTheme = 'soft-light' | 'high-contrast' | 'calm-dark' | 'soft-blue';
+export type SensoryTheme = 'soft-light' | 'soft-rose' | 'high-contrast' | 'calm-dark' | 'soft-blue';
 
 export type FontSizeOption = 'normal' | 'large' | 'extra-large';
 
@@ -76,4 +76,31 @@ export interface AppSettings {
   speechEnabled: boolean;
   notificationsEnabled?: boolean;
   activeProfileId: string;
+}
+
+export type LetterPaperStyle = 'classic_envelope' | 'parchment' | 'teddy_bear' | 'heart_seal';
+export type LetterFontFamily = 'dancing' | 'caveat' | 'playfair' | 'pacifico' | 'sans';
+export type LetterThemeColor = 'rose' | 'crimson' | 'lavender' | 'golden' | 'emerald';
+export type LetterFontColor = 'crimson' | 'sepia' | 'purple' | 'gold' | 'midnight' | 'rose' | 'charcoal';
+
+export interface LoveLetter {
+  id: string;
+  senderName: string;
+  senderRole: UserRole;
+  recipientName: string;
+  recipientRole: UserRole;
+  title: string;
+  message: string;
+  paperStyle: LetterPaperStyle;
+  fontFamily: LetterFontFamily;
+  themeColor: LetterThemeColor;
+  fontColor?: LetterFontColor;
+  moodEmoji?: string;
+  photoUrl?: string;
+  videoUrl?: string;
+  audioUrl?: string; // Voice recording or link
+  createdAt: string;
+  date: string;
+  read: boolean;
+  sealIcon?: 'heart' | 'bear' | 'sparkle' | 'rose' | 'ring' | 'crown' | 'kiss' | 'scroll';
 }

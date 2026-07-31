@@ -197,19 +197,16 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
                       {item.title}
                     </h3>
 
-                    {currentProfile.role === 'helper' && (
-                      <button
-                        onClick={() => {
-                          if (confirm('Deseja excluir esta foto do álbum?')) {
-                            onDeleteItem(item.id);
-                          }
-                        }}
-                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
-                        title="Excluir foto do álbum"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        soundManager.playPop();
+                        onDeleteItem(item.id);
+                      }}
+                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                      title="Excluir foto do álbum"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
