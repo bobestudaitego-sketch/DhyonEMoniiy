@@ -1,0 +1,6 @@
+{
+  "name": "Dhyon e Mooniy",
+  "description": "Aplicativo acessível de rotina diária, remédios, lembretes, música e diário entre Dhyon e Mooniy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
