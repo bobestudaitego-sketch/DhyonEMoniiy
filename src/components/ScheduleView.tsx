@@ -26,6 +26,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   speechEnabled
 }) => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  const [showAllDates, setShowAllDates] = useState<boolean>(false);
   const [currentTimeStr, setCurrentTimeStr] = useState<string>(getCurrentTimeString());
   const today = getTodayDateString();
 
@@ -49,18 +50,49 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     onSelectDate(date.toISOString().split('T')[0]);
   };
 
-  // Filter items for selected date
-  const dayItems = items.filter(item => item.date === selectedDate);
+  // Helper: Check if an item matches a date (including recurring rules)
+  const isItemForDate = (item: ScheduleItem, targetDate: string) => {
+    if (item.date === targetDate) return true;
+    if (item.recurring === 'daily' && targetDate >= item.date) return true;
+    if (item.recurring === 'weekly' && targetDate >= item.date) {
+      try {
+        const itemDay = new Date(item.date + 'T00:00:00').getDay();
+        const targetDay = new Date(targetDate + 'T00:00:00').getDay();
+        return itemDay === targetDay;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  };
+
+  // Filter items for selected date or all dates
+  const dayItems = showAllDates
+    ? items
+    : items.filter(item => isItemForDate(item, selectedDate));
+
+  // Caregiver tasks count across all items
+  const caregiverItems = items.filter(item =>
+    item.createdByRole === 'helper' ||
+    (item.createdBy && (item.createdBy.toLowerCase().includes('cuida') || item.createdBy.toLowerCase().includes('mooni')))
+  );
 
   // Filter by category
   const filteredItems = dayItems.filter(item => {
+    if (selectedCategoryFilter === 'caregiver') {
+      return item.createdByRole === 'helper' ||
+        (item.createdBy && (item.createdBy.toLowerCase().includes('cuida') || item.createdBy.toLowerCase().includes('mooni')));
+    }
     if (selectedCategoryFilter === 'all') return true;
     if (selectedCategoryFilter === 'medical_health') return item.category === 'medication' || item.category === 'medical';
     return item.category === selectedCategoryFilter;
   });
 
-  // Sort by start time
-  const sortedItems = [...filteredItems].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  // Sort by date and start time
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return a.startTime.localeCompare(b.startTime);
+  });
 
   // Completion calculation for selected date
   const totalCount = dayItems.length;
@@ -88,6 +120,41 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
   return (
     <div className="space-y-6">
+
+      {/* COMPONENTE: Aviso Importante sobre Tarefas da Cuidadora */}
+      {caregiverItems.length > 0 && (
+        <div className="p-4 rounded-3xl bg-linear-to-r from-teal-500/20 via-sky-500/20 to-indigo-500/20 border-2 border-teal-400 dark:border-teal-600 shadow-md flex items-center justify-between flex-wrap gap-3 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-teal-600 text-white font-black text-xl shadow-xs shrink-0">
+              👩‍⚕️
+            </div>
+            <div>
+              <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
+                <span>Tarefas enviadas pela Cuidadora (Mooniy)</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-teal-600 text-white text-xs font-bold shadow-2xs">
+                  {caregiverItems.length} {caregiverItems.length === 1 ? 'tarefa' : 'tarefas'}
+                </span>
+              </h4>
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium mt-0.5">
+                {showAllDates || selectedCategoryFilter === 'caregiver'
+                  ? 'Mostrando todas as tarefas cadastradas pela cuidadora!'
+                  : 'Sua cuidadora cadastrou orientações/tarefas para você. Clique ao lado para visualizar todas.'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedCategoryFilter('caregiver');
+              setShowAllDates(true);
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs shadow-md transition-all hover:scale-105 cursor-pointer flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            Ver Tarefas da Cuidadora
+          </button>
+        </div>
+      )}
 
       {/* COMPONENTE: Barra de Progresso do Dia */}
       <div id="day-progress-bar-card" className="p-5 sm:p-6 rounded-3xl bg-linear-to-br from-teal-50/90 via-sky-50 to-indigo-50/80 dark:from-slate-900 dark:via-indigo-950/60 dark:to-slate-900 text-slate-800 dark:text-white shadow-md border border-teal-200/80 dark:border-indigo-900/50 space-y-4 relative overflow-hidden">
@@ -249,61 +316,94 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
       </div>
 
-      {/* Category Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          onClick={() => setSelectedCategoryFilter('all')}
-          className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all ${
-            selectedCategoryFilter === 'all'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs'
-              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200'
-          }`}
-        >
-          🌟 Todos ({dayItems.length})
-        </button>
+      {/* Category Filter Pills & All Dates Toggle */}
+      <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryFilter('all')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
+              selectedCategoryFilter === 'all'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs'
+                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200'
+            }`}
+          >
+            🌟 Todos ({dayItems.length})
+          </button>
 
-        <button
-          onClick={() => setSelectedCategoryFilter('medical_health')}
-          className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
-            selectedCategoryFilter === 'medical_health'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-100'
-          }`}
-        >
-          <Pill className="w-3.5 h-3.5" /> Remédios e Consultas
-        </button>
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryFilter('caregiver')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategoryFilter === 'caregiver'
+                ? 'bg-teal-600 text-white shadow-md ring-2 ring-teal-400/50'
+                : 'bg-teal-50 text-teal-800 dark:bg-teal-950/80 dark:text-teal-200 hover:bg-teal-100 border border-teal-200 dark:border-teal-800'
+            }`}
+          >
+            👩‍⚕️ Tarefas da Cuidadora ({caregiverItems.length})
+          </button>
 
-        <button
-          onClick={() => setSelectedCategoryFilter('website')}
-          className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
-            selectedCategoryFilter === 'website'
-              ? 'bg-amber-500 text-slate-950 shadow-xs'
-              : 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-100'
-          }`}
-        >
-          <Globe className="w-3.5 h-3.5" /> Sites
-        </button>
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryFilter('medical_health')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategoryFilter === 'medical_health'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-100'
+            }`}
+          >
+            <Pill className="w-3.5 h-3.5" /> Remédios e Consultas
+          </button>
 
-        <button
-          onClick={() => setSelectedCategoryFilter('music')}
-          className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
-            selectedCategoryFilter === 'music'
-              ? 'bg-purple-600 text-white shadow-xs'
-              : 'bg-purple-50 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 hover:bg-purple-100'
-          }`}
-        >
-          <Music className="w-3.5 h-3.5" /> Músicas
-        </button>
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryFilter('website')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategoryFilter === 'website'
+                ? 'bg-amber-500 text-slate-950 shadow-xs'
+                : 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-100'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" /> Sites
+          </button>
 
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryFilter('music')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategoryFilter === 'music'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-purple-50 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 hover:bg-purple-100'
+            }`}
+          >
+            <Music className="w-3.5 h-3.5" /> Músicas
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryFilter('image_note')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedCategoryFilter === 'image_note'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 hover:bg-rose-100'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" /> Fotos & Recados
+          </button>
+        </div>
+
+        {/* Toggle Show All Dates */}
         <button
-          onClick={() => setSelectedCategoryFilter('image_note')}
-          className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
-            selectedCategoryFilter === 'image_note'
-              ? 'bg-rose-600 text-white shadow-xs'
-              : 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 hover:bg-rose-100'
+          type="button"
+          onClick={() => setShowAllDates(!showAllDates)}
+          className={`px-3.5 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all border flex items-center gap-1.5 cursor-pointer ml-auto ${
+            showAllDates
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
+              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <ImageIcon className="w-3.5 h-3.5" /> Fotos & Recados
+          <Calendar className="w-3.5 h-3.5" />
+          {showAllDates ? 'Ver Apenas Esta Data' : '📅 Ver Todas as Datas'}
         </button>
       </div>
 
@@ -376,7 +476,19 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                           {item.startTime} {item.endTime ? `às ${item.endTime}` : ''}
                         </span>
 
+                        {showAllDates && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                            📅 {formatPortugueseDate(item.date)}
+                          </span>
+                        )}
+
                         {getCategoryBadge(item.category)}
+
+                        {(item.createdByRole === 'helper' || (item.createdBy && (item.createdBy.toLowerCase().includes('cuida') || item.createdBy.toLowerCase().includes('mooni')))) && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-teal-100 text-teal-800 dark:bg-teal-950/90 dark:text-teal-200 border border-teal-300 dark:border-teal-700 flex items-center gap-1 shadow-2xs">
+                            👩‍⚕️ Enviado por {item.createdBy || 'Mooniy (Cuidadora)'}
+                          </span>
+                        )}
 
                         {isActive && (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-slate-950 uppercase tracking-wider animate-pulse">

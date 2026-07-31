@@ -142,6 +142,13 @@ export default function App() {
   // Auto-popup unread letter on load/login
   const [autoPopupLetter, setAutoPopupLetter] = useState<LoveLetter | null>(null);
 
+  // Recent change/update notification state
+  const [recentChangeNotice, setRecentChangeNotice] = useState<{
+    message: string;
+    type: 'letters' | 'journal' | 'schedule';
+    author?: string;
+  } | null>(null);
+
   // Sync to localStorage
   useEffect(() => {
     try {
@@ -194,6 +201,11 @@ export default function App() {
     };
 
     setLoveLetters(prev => [newLetter, ...prev]);
+    setRecentChangeNotice({
+      message: `Nova carta de amor enviada para ${letterData.recipientName}! 💌`,
+      type: 'letters',
+      author: currentProfile.name
+    });
   };
 
   const handleMarkLoveLetterRead = (letterId: string) => {
@@ -202,6 +214,11 @@ export default function App() {
 
   const handleDeleteLoveLetter = (letterId: string) => {
     setLoveLetters(prev => prev.filter(l => l.id !== letterId));
+    setRecentChangeNotice({
+      message: `Uma carta de amor foi apagada por ${currentProfile.name}. 🗑️`,
+      type: 'letters',
+      author: currentProfile.name
+    });
   };
 
   const handleUpdateSettings = (newPartial: Partial<AppSettings>) => {
@@ -228,10 +245,20 @@ export default function App() {
       createdAt: new Date().toISOString()
     };
     setItems(prev => [newItem, ...prev]);
+    setRecentChangeNotice({
+      message: `Nova tarefa "${newItemData.title}" adicionada à rotina por ${currentProfile.name}! 📅`,
+      type: 'schedule',
+      author: currentProfile.name
+    });
   };
 
   const handleDeleteItem = (itemId: string) => {
     setItems(prev => prev.filter(i => i.id !== itemId));
+    setRecentChangeNotice({
+      message: `Uma tarefa foi excluída da rotina por ${currentProfile.name}. 🗑️`,
+      type: 'schedule',
+      author: currentProfile.name
+    });
   };
 
   // Journal handlers
@@ -259,6 +286,11 @@ export default function App() {
       replies: []
     };
     setJournalEntries(prev => [newEntry, ...prev]);
+    setRecentChangeNotice({
+      message: `Novo registro postado no Diário por ${currentProfile.name}! 📓`,
+      type: 'journal',
+      author: currentProfile.name
+    });
   };
 
   const handleToggleJournalRead = (entryId: string) => {
@@ -288,6 +320,12 @@ export default function App() {
       }
       return e;
     }));
+
+    setRecentChangeNotice({
+      message: `Nova resposta adicionada ao Diário por ${currentProfile.name}! 💬`,
+      type: 'journal',
+      author: currentProfile.name
+    });
   };
 
   const handleDeleteJournalEntry = (entryId: string) => {
@@ -397,6 +435,83 @@ export default function App() {
           speechEnabled={settings.speechEnabled}
         />
 
+        {/* Flashing Alert Banner for Changes & Updates */}
+        {(() => {
+          const isDhyon = currentProfile.name.toLowerCase().includes('dhyon');
+          const myName = isDhyon ? 'Dhyon' : 'Mooniy';
+          const otherName = isDhyon ? 'Mooniy' : 'Dhyon';
+          const unreadLetters = loveLetters.filter(l => l.recipientName === myName && !l.read);
+          const unreadJournal = journalEntries.filter(e => !e.readByOther && (isDhyon ? e.authorRole === 'helper' : e.authorRole === 'user'));
+
+          if (unreadLetters.length === 0 && unreadJournal.length === 0 && !recentChangeNotice) {
+            return null;
+          }
+
+          return (
+            <div className="p-4 rounded-3xl bg-linear-to-r from-amber-500/20 via-rose-500/20 to-teal-500/20 border-2 border-amber-400 dark:border-amber-500 shadow-xl flex items-center justify-between flex-wrap gap-3 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-amber-500 text-slate-950 font-black text-xl shadow-md shrink-0 animate-bounce">
+                  ⚡
+                </div>
+                <div>
+                  <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
+                    <span>Aviso de Novidade & Alteração</span>
+                    <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-xs font-black animate-ping">
+                      NOVO
+                    </span>
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-extrabold mt-0.5">
+                    {recentChangeNotice ? recentChangeNotice.message : (
+                      unreadLetters.length > 0 && unreadJournal.length > 0
+                        ? `Você recebeu ${unreadLetters.length} nova(s) carta(s) de amor e há ${unreadJournal.length} novo(s) recado(s) no diário!`
+                        : unreadLetters.length > 0
+                          ? `Você recebeu ${unreadLetters.length} nova(s) carta(s) de amor de ${otherName}! 💌`
+                          : `Há ${unreadJournal.length} novo(s) recado(s) ou resposta(s) no Diário! 📓`
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {unreadLetters.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('letters');
+                      setRecentChangeNotice(null);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5 hover:scale-105"
+                  >
+                    <Mail className="w-4 h-4 text-rose-200" />
+                    Ver Carta ({unreadLetters.length})
+                  </button>
+                )}
+                {unreadJournal.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('journal');
+                      setRecentChangeNotice(null);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5 hover:scale-105"
+                  >
+                    <BookOpen className="w-4 h-4 text-teal-200" />
+                    Ver Diário ({unreadJournal.length})
+                  </button>
+                )}
+                {recentChangeNotice && (
+                  <button
+                    type="button"
+                    onClick={() => setRecentChangeNotice(null)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold hover:bg-slate-700 cursor-pointer"
+                  >
+                    OK
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Primary View Navigation Tabs */}
         <div className="flex items-center gap-2.5 overflow-x-auto pb-2 border-b border-slate-200/80 dark:border-slate-800 scrollbar-none py-1">
           <button
@@ -409,6 +524,11 @@ export default function App() {
           >
             <Calendar className="w-4 h-4 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
             Minha Rotina Diária
+            {items.filter(i => (i.createdByRole === 'helper' || (i.createdBy && i.createdBy.toLowerCase().includes('mooni'))) && !i.completed).length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-teal-500 text-white text-[10px] font-black animate-pulse shadow-2xs">
+                👩‍⚕️ Tarefas
+              </span>
+            )}
           </button>
 
           <button
@@ -469,9 +589,19 @@ export default function App() {
           >
             <Mail className="w-4 h-4 text-rose-500 dark:text-rose-400 animate-bounce" />
             Cartas de Amor 💌
-            {loveLetters.filter(l => l.recipientName === (currentProfile.name.toLowerCase().includes('dhyon') ? 'Dhyon' : 'Mooniy') && !l.read).length > 0 && (
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
-            )}
+            {(() => {
+              const isDhyon = currentProfile.name.toLowerCase().includes('dhyon');
+              const myName = isDhyon ? 'Dhyon' : 'Mooniy';
+              const count = loveLetters.filter(l => l.recipientName === myName && !l.read).length;
+              if (count > 0) {
+                return (
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-bounce shadow-2xs">
+                    ⚡ {count} NOVA(S)
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </button>
 
           <button
@@ -484,9 +614,18 @@ export default function App() {
           >
             <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-300" />
             Diário Dhyon & Mooniy 📓
-            {journalEntries.filter(e => !e.readByOther && e.authorType === 'caregiver_to_user').length > 0 && (
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-            )}
+            {(() => {
+              const isDhyon = currentProfile.name.toLowerCase().includes('dhyon');
+              const count = journalEntries.filter(e => !e.readByOther && (isDhyon ? e.authorRole === 'helper' : e.authorRole === 'user')).length;
+              if (count > 0) {
+                return (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black animate-pulse shadow-2xs">
+                    ⚡ {count} RECADOS
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </button>
         </div>
 
