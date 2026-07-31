@@ -182,10 +182,11 @@
   body {
     background-color: #ffffff !important;
     color: #000000 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
   }
   
   /* Hide non-printable elements */
-  .no-print, nav, header, button, .no-print-bg {
+  .no-print, nav, header, button, footer, .fixed, .group {
     display: none !important;
   }
 
@@ -197,10 +198,10 @@
     top: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 24px !important;
+    padding: 20pt !important;
     background: #ffffff !important;
     color: #000000 !important;
-    font-size: 12pt !important;
+    font-size: 11pt !important;
     line-height: 1.5 !important;
   }
 
@@ -209,6 +210,7 @@
     background: transparent !important;
     box-shadow: none !important;
     border-color: #000000 !important;
+    text-shadow: none !important;
   }
 }
 

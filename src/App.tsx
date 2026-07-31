@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScheduleItem, UserProfile, AppSettings, SensoryTheme, JournalEntry, JournalAuthorType, LoveLetter } from './types';
+import { ScheduleItem, UserProfile, AppSettings, SensoryTheme, JournalEntry, JournalAuthorType, LoveLetter, PrivateNote } from './types';
 import { INITIAL_PROFILES, INITIAL_SCHEDULE_ITEMS, INITIAL_JOURNAL_ENTRIES, INITIAL_LOVE_LETTERS } from './data/initialData';
 import { getTodayDateString } from './utils/date';
 import { Header } from './components/Header';
@@ -12,13 +12,15 @@ import { GallerySection } from './components/GallerySection';
 import { CaregiverJournal } from './components/CaregiverJournal';
 import { LoveLettersSection } from './components/LoveLettersSection';
 import { LoveLetterModal } from './components/LoveLetterModal';
+import { PrivateAgendaModal } from './components/PrivateAgendaModal';
 import { AddItemModal } from './components/AddItemModal';
 import { LoginModal } from './components/LoginModal';
 import { LoginScreen } from './components/LoginScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { ReminderNotifier } from './components/ReminderNotifier';
 import { HeartParticles } from './components/HeartParticles';
-import { Calendar, Pill, Globe, Music, Image as ImageIcon, HeartHandshake, ShieldCheck, Sparkles, BookOpen, Heart, Mail, ChevronLeft, ChevronRight } from 'lucide-react';
+import { soundManager } from './utils/sound';
+import { Calendar, Pill, Globe, Music, Image as ImageIcon, HeartHandshake, ShieldCheck, Sparkles, BookOpen, Heart, Mail, ChevronLeft, ChevronRight, StickyNote, Lock } from 'lucide-react';
 
 export default function App() {
   // Local storage keys
@@ -27,6 +29,7 @@ export default function App() {
   const STORAGE_PROFILE_KEY = 'meu_dia_seguro_profile_v4';
   const STORAGE_JOURNAL_KEY = 'meu_dia_seguro_journal_v4';
   const STORAGE_LOVE_LETTERS_KEY = 'meu_dia_seguro_love_letters_v4';
+  const STORAGE_PRIVATE_NOTES_KEY = 'meu_dia_seguro_private_notes_v4';
   const STORAGE_AUTH_KEY = 'meu_dia_seguro_auth_v4';
 
   // Load items
@@ -57,6 +60,40 @@ export default function App() {
     } catch {
       return INITIAL_LOVE_LETTERS;
     }
+  });
+
+  // Load private notes (individual per profile)
+  const [privateNotes, setPrivateNotes] = useState<PrivateNote[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_PRIVATE_NOTES_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      {
+        id: 'note-dhyon-1',
+        ownerProfileId: 'user-dhyon',
+        title: '💡 Ideias e Lembretes Dhyon',
+        content: 'Minha agendinha e anotações particulares do dia a dia. Apenas eu vejo!',
+        date: getTodayDateString(),
+        time: '10:00',
+        category: 'agenda',
+        completed: false,
+        colorTag: '#6366f1',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'note-mooni-1',
+        ownerProfileId: 'caregiver-mooni',
+        title: '🌸 Agendinha Pessoal Mooniy',
+        content: 'Minhas anotações privadas sobre a rotina e planos secretos.',
+        date: getTodayDateString(),
+        time: '10:00',
+        category: 'secret',
+        completed: false,
+        colorTag: '#f43f5e',
+        createdAt: new Date().toISOString()
+      }
+    ];
   });
 
   // Load settings
@@ -138,6 +175,7 @@ export default function App() {
   const [addItemCategoryPreset, setAddItemCategoryPreset] = useState<string>('routine');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isPrivateAgendaOpen, setIsPrivateAgendaOpen] = useState(false);
 
   // Auto-popup unread letter on load/login
   const [autoPopupLetter, setAutoPopupLetter] = useState<LoveLetter | null>(null);
@@ -205,6 +243,12 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem(STORAGE_PRIVATE_NOTES_KEY, JSON.stringify(privateNotes));
+    } catch {}
+  }, [privateNotes]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings));
     } catch {}
   }, [settings]);
@@ -216,6 +260,25 @@ export default function App() {
   }, [activeProfileId]);
 
   const currentProfile = profiles.find(p => p.id === activeProfileId) || profiles[0];
+
+  // Private Note Handlers
+  const handleAddPrivateNote = (noteData: Omit<PrivateNote, 'id' | 'createdAt' | 'ownerProfileId'>) => {
+    const newNote: PrivateNote = {
+      ...noteData,
+      id: 'pnote-' + Date.now(),
+      ownerProfileId: currentProfile.id,
+      createdAt: new Date().toISOString()
+    };
+    setPrivateNotes(prev => [newNote, ...prev]);
+  };
+
+  const handleToggleCompletePrivateNote = (id: string) => {
+    setPrivateNotes(prev => prev.map(n => n.id === id ? { ...n, completed: !n.completed } : n));
+  };
+
+  const handleDeletePrivateNote = (id: string) => {
+    setPrivateNotes(prev => prev.filter(n => n.id !== id));
+  };
 
   // Auto trigger letter popup when opening app or switching profile if there's an unread letter for current user
   useEffect(() => {
@@ -814,6 +877,49 @@ export default function App() {
         onResetData={handleResetData}
         onClearAllPosts={handleClearAllPosts}
       />
+
+      <PrivateAgendaModal
+        isOpen={isPrivateAgendaOpen}
+        onClose={() => setIsPrivateAgendaOpen(false)}
+        currentProfile={currentProfile}
+        notes={privateNotes}
+        onAddNote={handleAddPrivateNote}
+        onToggleCompleteNote={handleToggleCompletePrivateNote}
+        onDeleteNote={handleDeletePrivateNote}
+      />
+
+      {/* Floating Action Button for Private Agenda */}
+      <div className="fixed bottom-5 right-5 z-40 group">
+        <button
+          type="button"
+          onClick={() => {
+            soundManager.playPop();
+            setIsPrivateAgendaOpen(true);
+          }}
+          className="relative p-3.5 sm:p-4 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 hover:from-indigo-500 hover:to-rose-500 text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center border-2 border-white/40 ring-4 ring-indigo-500/20"
+          title="Minha Agendinha Privada & Anotações"
+        >
+          <StickyNote className="w-6 h-6 sm:w-7 sm:h-7 animate-pulse" />
+          
+          {/* Uncompleted notes count badge */}
+          {privateNotes.filter(n => n.ownerProfileId === currentProfile.id && !n.completed).length > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-md animate-bounce">
+              {privateNotes.filter(n => n.ownerProfileId === currentProfile.id && !n.completed).length}
+            </span>
+          )}
+
+          {/* Privacy badge icon */}
+          <span className="absolute -bottom-1 -left-1 bg-slate-900 text-emerald-400 p-1 rounded-full border border-emerald-500 shadow-xs">
+            <Lock className="w-2.5 h-2.5" />
+          </span>
+        </button>
+
+        {/* Floating tooltip preview */}
+        <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold whitespace-nowrap shadow-xl border border-slate-700 animate-fade-in pointer-events-none">
+          <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span>Agendinha Privada de {currentProfile.name}</span>
+        </div>
+      </div>
 
       {/* Automatic Love Letter Popup on Opening App */}
       {autoPopupLetter && (

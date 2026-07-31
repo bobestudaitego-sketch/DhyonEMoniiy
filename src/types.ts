@@ -106,3 +106,16 @@ export interface LoveLetter {
   read: boolean;
   sealIcon?: 'heart' | 'bear' | 'sparkle' | 'rose' | 'ring' | 'crown' | 'kiss' | 'scroll';
 }
+
+export interface PrivateNote {
+  id: string;
+  ownerProfileId: string; // Profile ID of owner (e.g. 'user-dhyon' or 'caregiver-mooni')
+  title: string;
+  content: string;
+  date: string;       // YYYY-MM-DD
+  time: string;       // HH:MM
+  category?: 'agenda' | 'todo' | 'secret' | 'reminder';
+  completed?: boolean;
+  colorTag?: string;  // Hex or Tailwind color name
+  createdAt: string;
+}
