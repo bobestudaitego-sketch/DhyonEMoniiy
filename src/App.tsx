@@ -18,7 +18,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { ReminderNotifier } from './components/ReminderNotifier';
 import { HeartParticles } from './components/HeartParticles';
-import { Calendar, Pill, Globe, Music, Image as ImageIcon, HeartHandshake, ShieldCheck, Sparkles, BookOpen, Heart, Mail } from 'lucide-react';
+import { Calendar, Pill, Globe, Music, Image as ImageIcon, HeartHandshake, ShieldCheck, Sparkles, BookOpen, Heart, Mail, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function App() {
   // Local storage keys
@@ -148,6 +148,41 @@ export default function App() {
     type: 'letters' | 'journal' | 'schedule';
     author?: string;
   } | null>(null);
+
+  // Navigation tabs drag & scroll state
+  const navTabsRef = React.useRef<HTMLDivElement>(null);
+  const [isNavDragging, setIsNavDragging] = useState(false);
+  const [navStartX, setNavStartX] = useState(0);
+  const [navScrollLeft, setNavScrollLeft] = useState(0);
+
+  const handleNavMouseDown = (e: React.MouseEvent) => {
+    if (!navTabsRef.current) return;
+    setIsNavDragging(true);
+    setNavStartX(e.pageX - navTabsRef.current.offsetLeft);
+    setNavScrollLeft(navTabsRef.current.scrollLeft);
+  };
+
+  const handleNavMouseLeave = () => {
+    setIsNavDragging(false);
+  };
+
+  const handleNavMouseUp = () => {
+    setIsNavDragging(false);
+  };
+
+  const handleNavMouseMove = (e: React.MouseEvent) => {
+    if (!isNavDragging || !navTabsRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - navTabsRef.current.offsetLeft;
+    const walk = (x - navStartX) * 1.8;
+    navTabsRef.current.scrollLeft = navScrollLeft - walk;
+  };
+
+  const scrollNav = (direction: 'left' | 'right') => {
+    if (!navTabsRef.current) return;
+    const amount = direction === 'left' ? -260 : 260;
+    navTabsRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+  };
 
   // Sync to localStorage
   useEffect(() => {
@@ -513,119 +548,150 @@ export default function App() {
         })()}
 
         {/* Primary View Navigation Tabs */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 border-b border-slate-200/80 dark:border-slate-800 scrollbar-none py-1">
+        <div className="relative group/nav py-1">
+          {/* Scroll Left Button */}
           <button
-            onClick={() => setActiveTab('schedule')}
-            className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
-              activeTab === 'schedule'
-                ? 'bg-indigo-600 text-white shadow-md scale-[1.02]'
-                : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-indigo-50 hover:text-indigo-800 hover:border-indigo-300 dark:hover:bg-indigo-950/60 dark:hover:text-indigo-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
-            }`}
+            type="button"
+            onClick={() => scrollNav('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-slate-900/90 hover:bg-indigo-600 text-white shadow-xl border border-slate-700 backdrop-blur-md transition-all cursor-pointer flex items-center justify-center -ml-2 sm:-ml-3 active:scale-90"
+            title="Rolar para esquerda"
           >
-            <Calendar className="w-4 h-4 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
-            Minha Rotina Diária
-            {items.filter(i => (i.createdByRole === 'helper' || (i.createdBy && i.createdBy.toLowerCase().includes('mooni'))) && !i.completed).length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-teal-500 text-white text-[10px] font-black animate-pulse shadow-2xs">
-                👩‍⚕️ Tarefas
-              </span>
-            )}
+            <ChevronLeft className="w-4 h-4 text-white" />
           </button>
 
-          <button
-            onClick={() => setActiveTab('medication')}
-            className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
-              activeTab === 'medication'
-                ? 'bg-emerald-600 text-white shadow-md scale-[1.02]'
-                : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+          <div
+            ref={navTabsRef}
+            onMouseDown={handleNavMouseDown}
+            onMouseLeave={handleNavMouseLeave}
+            onMouseUp={handleNavMouseUp}
+            onMouseMove={handleNavMouseMove}
+            className={`flex items-center gap-2.5 overflow-x-auto pb-3 pt-1 px-1 border-b border-slate-200/80 dark:border-slate-800 touch-pan-x cursor-grab transition-all ${
+              isNavDragging ? 'cursor-grabbing select-none' : ''
             }`}
           >
-            <Pill className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-            Remédios & Médicos
-          </button>
+            <button
+              onClick={() => setActiveTab('schedule')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
+                activeTab === 'schedule'
+                  ? 'bg-indigo-600 text-white shadow-md scale-[1.02]'
+                  : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-indigo-50 hover:text-indigo-800 hover:border-indigo-300 dark:hover:bg-indigo-950/60 dark:hover:text-indigo-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+              }`}
+            >
+              <Calendar className="w-4 h-4 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
+              Minha Rotina Diária
+              {items.filter(i => (i.createdByRole === 'helper' || (i.createdBy && i.createdBy.toLowerCase().includes('mooni'))) && !i.completed).length > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-teal-500 text-white text-[10px] font-black animate-pulse shadow-2xs">
+                  👩‍⚕️ Tarefas
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={() => setActiveTab('websites')}
-            className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
-              activeTab === 'websites'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-[1.02]'
-                : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 dark:hover:bg-amber-950/60 dark:hover:text-amber-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
-            }`}
-          >
-            <Globe className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-            Sites Recomendados
-          </button>
+            <button
+              onClick={() => setActiveTab('medication')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
+                activeTab === 'medication'
+                  ? 'bg-emerald-600 text-white shadow-md scale-[1.02]'
+                  : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+              }`}
+            >
+              <Pill className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+              Remédios & Médicos
+            </button>
 
-          <button
-            onClick={() => setActiveTab('music')}
-            className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
-              activeTab === 'music'
-                ? 'bg-purple-600 text-white shadow-md scale-[1.02]'
-                : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-purple-50 hover:text-purple-900 hover:border-purple-300 dark:hover:bg-purple-950/60 dark:hover:text-purple-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
-            }`}
-          >
-            <Music className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-            Músicas & Sons
-          </button>
+            <button
+              onClick={() => setActiveTab('websites')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
+                activeTab === 'websites'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-[1.02]'
+                  : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 dark:hover:bg-amber-950/60 dark:hover:text-amber-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+              }`}
+            >
+              <Globe className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+              Sites Recomendados
+            </button>
 
-          <button
-            onClick={() => setActiveTab('gallery')}
-            className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
-              activeTab === 'gallery'
-                ? 'bg-rose-500 text-white shadow-md scale-[1.02]'
-                : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-rose-50 hover:text-rose-900 hover:border-rose-300 dark:hover:bg-rose-950/60 dark:hover:text-rose-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
-            }`}
-          >
-            <Heart className="w-4 h-4 text-rose-500 fill-rose-400 animate-pulse" />
-            Álbum de Fotos Dhyon & Mooniy
-          </button>
+            <button
+              onClick={() => setActiveTab('music')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
+                activeTab === 'music'
+                  ? 'bg-purple-600 text-white shadow-md scale-[1.02]'
+                  : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-purple-50 hover:text-purple-900 hover:border-purple-300 dark:hover:bg-purple-950/60 dark:hover:text-purple-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+              }`}
+            >
+              <Music className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+              Músicas & Sons
+            </button>
 
-          <button
-            onClick={() => setActiveTab('letters')}
-            className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
-              activeTab === 'letters'
-                ? 'bg-rose-600 text-white shadow-md scale-[1.02]'
-                : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-rose-50 hover:text-rose-900 hover:border-rose-300 dark:hover:bg-rose-950/60 dark:hover:text-rose-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
-            }`}
-          >
-            <Mail className="w-4 h-4 text-rose-500 dark:text-rose-400 animate-bounce" />
-            Cartas de Amor 💌
-            {(() => {
-              const isDhyon = currentProfile.name.toLowerCase().includes('dhyon');
-              const myName = isDhyon ? 'Dhyon' : 'Mooniy';
-              const count = loveLetters.filter(l => l.recipientName === myName && !l.read).length;
-              if (count > 0) {
-                return (
-                  <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-bounce shadow-2xs">
-                    ⚡ {count} NOVA(S)
-                  </span>
-                );
-              }
-              return null;
-            })()}
-          </button>
+            <button
+              onClick={() => setActiveTab('gallery')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
+                activeTab === 'gallery'
+                  ? 'bg-rose-500 text-white shadow-md scale-[1.02]'
+                  : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-rose-50 hover:text-rose-900 hover:border-rose-300 dark:hover:bg-rose-950/60 dark:hover:text-rose-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+              }`}
+            >
+              <Heart className="w-4 h-4 text-rose-500 fill-rose-400 animate-pulse" />
+              Álbum de Fotos Dhyon & Mooniy
+            </button>
 
+            <button
+              onClick={() => setActiveTab('letters')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
+                activeTab === 'letters'
+                  ? 'bg-rose-600 text-white shadow-md scale-[1.02]'
+                  : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-rose-50 hover:text-rose-900 hover:border-rose-300 dark:hover:bg-rose-950/60 dark:hover:text-rose-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+              }`}
+            >
+              <Mail className="w-4 h-4 text-rose-500 dark:text-rose-400 animate-bounce" />
+              Cartas de Amor 💌
+              {(() => {
+                const isDhyon = currentProfile.name.toLowerCase().includes('dhyon');
+                const myName = isDhyon ? 'Dhyon' : 'Mooniy';
+                const count = loveLetters.filter(l => l.recipientName === myName && !l.read).length;
+                if (count > 0) {
+                  return (
+                    <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-bounce shadow-2xs">
+                      ⚡ {count} NOVA(S)
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('journal')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
+                activeTab === 'journal'
+                  ? 'bg-teal-700 text-white shadow-md scale-[1.02]'
+                  : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-teal-50 hover:text-teal-900 hover:border-teal-300 dark:hover:bg-teal-950/60 dark:hover:text-teal-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-300" />
+              Diário Dhyon & Mooniy 📓
+              {(() => {
+                const isDhyon = currentProfile.name.toLowerCase().includes('dhyon');
+                const count = journalEntries.filter(e => !e.readByOther && (isDhyon ? e.authorRole === 'helper' : e.authorRole === 'user')).length;
+                if (count > 0) {
+                  return (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black animate-pulse shadow-2xs">
+                      ⚡ {count} RECADOS
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </button>
+          </div>
+
+          {/* Scroll Right Button */}
           <button
-            onClick={() => setActiveTab('journal')}
-            className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all duration-200 cursor-pointer ${
-              activeTab === 'journal'
-                ? 'bg-teal-700 text-white shadow-md scale-[1.02]'
-                : 'bg-white/90 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 hover:bg-teal-50 hover:text-teal-900 hover:border-teal-300 dark:hover:bg-teal-950/60 dark:hover:text-teal-200 hover:scale-[1.04] active:scale-[0.97] hover:shadow-sm'
-            }`}
+            type="button"
+            onClick={() => scrollNav('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-slate-900/90 hover:bg-indigo-600 text-white shadow-xl border border-slate-700 backdrop-blur-md transition-all cursor-pointer flex items-center justify-center -mr-2 sm:-mr-3 active:scale-90"
+            title="Rolar para direita"
           >
-            <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-300" />
-            Diário Dhyon & Mooniy 📓
-            {(() => {
-              const isDhyon = currentProfile.name.toLowerCase().includes('dhyon');
-              const count = journalEntries.filter(e => !e.readByOther && (isDhyon ? e.authorRole === 'helper' : e.authorRole === 'user')).length;
-              if (count > 0) {
-                return (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black animate-pulse shadow-2xs">
-                    ⚡ {count} RECADOS
-                  </span>
-                );
-              }
-              return null;
-            })()}
+            <ChevronRight className="w-4 h-4 text-white" />
           </button>
         </div>
 
