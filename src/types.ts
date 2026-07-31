@@ -81,7 +81,8 @@ export interface AppSettings {
 export type LetterPaperStyle = 'classic_envelope' | 'parchment' | 'teddy_bear' | 'heart_seal';
 export type LetterFontFamily = 'dancing' | 'caveat' | 'playfair' | 'pacifico' | 'sans';
 export type LetterThemeColor = 'rose' | 'crimson' | 'lavender' | 'golden' | 'emerald';
-export type LetterFontColor = 'crimson' | 'sepia' | 'purple' | 'gold' | 'midnight' | 'rose' | 'charcoal';
+export type LetterFontColor = 'white' | 'black' | 'crimson' | 'sepia' | 'purple' | 'gold' | 'midnight' | 'rose' | 'charcoal' | 'emerald' | 'navy';
+export type LetterBgColor = 'vintage_parchment' | 'white' | 'dark_black' | 'rose_pink' | 'romantic_red' | 'lavender_purple' | 'golden_amber' | 'emerald_green' | 'midnight_blue' | 'sweet_peach';
 
 export interface LoveLetter {
   id: string;
@@ -95,6 +96,7 @@ export interface LoveLetter {
   fontFamily: LetterFontFamily;
   themeColor: LetterThemeColor;
   fontColor?: LetterFontColor;
+  bgColor?: LetterBgColor;
   moodEmoji?: string;
   photoUrl?: string;
   videoUrl?: string;

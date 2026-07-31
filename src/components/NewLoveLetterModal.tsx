@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Heart, X, Sparkles, Mic, Square, Play, Pause, Camera, Video, Type, Palette, FileText, Check, Music, Eye, Smile } from 'lucide-react';
-import { LoveLetter, LetterPaperStyle, LetterFontFamily, LetterThemeColor, LetterFontColor, UserProfile } from '../types';
+import { LoveLetter, LetterPaperStyle, LetterFontFamily, LetterThemeColor, LetterFontColor, LetterBgColor, UserProfile } from '../types';
 import { LoveLetterModal } from './LoveLetterModal';
 import { soundManager } from '../utils/sound';
 
@@ -31,7 +31,8 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
   const [paperStyle, setPaperStyle] = useState<LetterPaperStyle>('parchment');
   const [fontFamily, setFontFamily] = useState<LetterFontFamily>('dancing');
   const [themeColor, setThemeColor] = useState<LetterThemeColor>('rose');
-  const [fontColor, setFontColor] = useState<LetterFontColor>('crimson');
+  const [fontColor, setFontColor] = useState<LetterFontColor>('black');
+  const [bgColor, setBgColor] = useState<LetterBgColor>('rose_pink');
   const [moodEmoji, setMoodEmoji] = useState<string>('🥰');
   const [sealIcon, setSealIcon] = useState<'heart' | 'bear' | 'sparkle' | 'rose' | 'ring' | 'crown' | 'kiss' | 'scroll'>('scroll');
   
@@ -53,6 +54,33 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
 
   // Emoji picker list for love letters
   const LOVE_EMOJIS = ['🥰', '🧸', '💖', '🌹', '👑', '💍', '💋', '💌', '😍', '🥺', '✨', '💐', '🔥', '⭐', '🎶', '🕊️', '📜', '⭐', '❤️‍🔥'];
+
+  const FONT_COLOR_OPTIONS: { id: LetterFontColor; label: string; color: string; border?: string }[] = [
+    { id: 'white', label: 'Branco Neve ⚪', color: '#ffffff', border: '#cbd5e1' },
+    { id: 'black', label: 'Preto Intenso ⚫', color: '#000000' },
+    { id: 'crimson', label: 'Vermelho Carmim 🔴', color: '#9f1239' },
+    { id: 'rose', label: 'Rosa Chiclete 💖', color: '#be123c' },
+    { id: 'purple', label: 'Roxo Romântico 💜', color: '#581c87' },
+    { id: 'gold', label: 'Dourado Reluzente 💛', color: '#854d0e' },
+    { id: 'sepia', label: 'Sépia Pergaminho 📜', color: '#582f0e' },
+    { id: 'midnight', label: 'Azul Noturno 🌙', color: '#0f172a' },
+    { id: 'navy', label: 'Azul Marinho ⚓', color: '#1e3a8a' },
+    { id: 'charcoal', label: 'Grafite Nobre ✏️', color: '#334155' },
+    { id: 'emerald', label: 'Verde Esmeralda 💚', color: '#065f46' },
+  ];
+
+  const BG_COLOR_OPTIONS: { id: LetterBgColor; label: string; colorDot: string; darkText?: boolean }[] = [
+    { id: 'rose_pink', label: '💖 Rosa Romântico', colorDot: '#f43f5e', darkText: true },
+    { id: 'white', label: '⚪ Branco Neve', colorDot: '#ffffff', darkText: true },
+    { id: 'dark_black', label: '⚫ Preto Noturno', colorDot: '#090d16' },
+    { id: 'romantic_red', label: '❤️ Vermelho Paixão', colorDot: '#dc2626' },
+    { id: 'lavender_purple', label: '💜 Roxo Lavanda', colorDot: '#a855f7', darkText: true },
+    { id: 'golden_amber', label: '💛 Dourado Vintage', colorDot: '#f59e0b', darkText: true },
+    { id: 'emerald_green', label: '💚 Verde Esmeralda', colorDot: '#10b981' },
+    { id: 'midnight_blue', label: '💙 Azul Noturno', colorDot: '#1e293b' },
+    { id: 'vintage_parchment', label: '📜 Pergaminho Clássico', colorDot: '#d97706', darkText: true },
+    { id: 'sweet_peach', label: '🍑 Pêssego Suave', colorDot: '#fb923c', darkText: true },
+  ];
 
   const insertEmoji = (emoji: string) => {
     soundManager.playPop();
@@ -127,6 +155,7 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
       fontFamily,
       themeColor,
       fontColor,
+      bgColor,
       moodEmoji,
       sealIcon,
       photoUrl: photoUrl.trim() || undefined,
@@ -149,17 +178,36 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
     }
   };
 
-  // Font color preview helper
-  const getFontColorPreviewClass = (c: LetterFontColor) => {
+  const getFontColorStyle = (c: LetterFontColor): React.CSSProperties => {
     switch (c) {
-      case 'crimson': return 'text-letter-crimson';
-      case 'sepia': return 'text-letter-sepia';
-      case 'purple': return 'text-letter-purple';
-      case 'gold': return 'text-letter-gold';
-      case 'midnight': return 'text-letter-midnight';
-      case 'rose': return 'text-letter-rose';
-      case 'charcoal': return 'text-letter-charcoal';
-      default: return 'text-slate-900';
+      case 'white': return { color: '#ffffff' };
+      case 'black': return { color: '#000000' };
+      case 'crimson': return { color: '#9f1239' };
+      case 'sepia': return { color: '#582f0e' };
+      case 'purple': return { color: '#581c87' };
+      case 'gold': return { color: '#854d0e' };
+      case 'midnight': return { color: '#0f172a' };
+      case 'rose': return { color: '#be123c' };
+      case 'charcoal': return { color: '#334155' };
+      case 'emerald': return { color: '#065f46' };
+      case 'navy': return { color: '#1e3a8a' };
+      default: return { color: '#000000' };
+    }
+  };
+
+  const getBgColorClass = (bg: LetterBgColor) => {
+    switch (bg) {
+      case 'white': return 'bg-white border-slate-300 shadow-sm';
+      case 'dark_black': return 'bg-slate-950 border-slate-800 text-white shadow-md';
+      case 'rose_pink': return 'bg-gradient-to-br from-rose-100 via-pink-100 to-rose-200 border-rose-300 shadow-sm';
+      case 'romantic_red': return 'bg-gradient-to-br from-rose-900 via-red-900 to-rose-950 border-rose-500 text-white shadow-md';
+      case 'lavender_purple': return 'bg-gradient-to-br from-purple-100 via-indigo-100 to-purple-200 border-purple-300 shadow-sm';
+      case 'golden_amber': return 'bg-gradient-to-br from-amber-100 via-yellow-100 to-amber-200 border-amber-400 shadow-sm';
+      case 'emerald_green': return 'bg-gradient-to-br from-teal-900 via-emerald-900 to-slate-900 border-teal-500 text-white shadow-md';
+      case 'midnight_blue': return 'bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 border-indigo-500 text-white shadow-md';
+      case 'sweet_peach': return 'bg-gradient-to-br from-orange-100 via-amber-100 to-rose-100 border-orange-300 shadow-sm';
+      case 'vintage_parchment':
+      default: return 'bg-parchment border-amber-400 shadow-sm';
     }
   };
 
@@ -293,37 +341,60 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
                 Cor da Fonte da Carta (Texto):
               </label>
               <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'crimson', label: 'Vermelho Carmim', color: '#9f1239' },
-                  { id: 'sepia', label: 'Sépia Pergaminho', color: '#582f0e' },
-                  { id: 'purple', label: 'Roxo Romântico', color: '#581c87' },
-                  { id: 'gold', label: 'Dourado Escuro', color: '#854d0e' },
-                  { id: 'midnight', label: 'Azul Noturno', color: '#0f172a' },
-                  { id: 'rose', label: 'Rosa Chiclete', color: '#be123c' },
-                  { id: 'charcoal', label: 'Grafite Nobre', color: '#334155' },
-                ].map(item => (
+                {FONT_COLOR_OPTIONS.map(item => (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setFontColor(item.id as LetterFontColor)}
+                    onClick={() => setFontColor(item.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
                       fontColor === item.id
-                        ? 'ring-2 ring-rose-500 border-rose-500 bg-white dark:bg-slate-900 font-extrabold shadow-xs'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                        ? 'ring-2 ring-rose-500 border-rose-500 bg-white dark:bg-slate-900 font-extrabold shadow-xs scale-105'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-rose-50/50'
                     }`}
                   >
-                    <span className="w-3.5 h-3.5 rounded-full border border-slate-300" style={{ backgroundColor: item.color }} />
-                    <span style={{ color: item.color }}>{item.label}</span>
+                    <span
+                      className="w-4 h-4 rounded-full border border-slate-300 shadow-2xs shrink-0"
+                      style={{ backgroundColor: item.color, borderColor: item.border || item.color }}
+                    />
+                    <span style={{ color: item.id === 'white' ? '#475569' : item.color }}>{item.label}</span>
                     {fontColor === item.id && <Check className="w-3.5 h-3.5 text-rose-500 ml-auto" />}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 4. Theme Color Choice */}
+            {/* 4. Letter Background Color Choice */}
             <div>
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 mb-2">
-                <Palette className="w-4 h-4 text-rose-500" />
+                <Palette className="w-4 h-4 text-indigo-500" />
+                Cor do Fundo da Carta (Papel/Cartão):
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {BG_COLOR_OPTIONS.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setBgColor(item.id)}
+                    className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-between gap-1.5 transition-all cursor-pointer ${
+                      bgColor === item.id
+                        ? 'ring-2 ring-indigo-500 border-indigo-500 bg-white dark:bg-slate-900 shadow-xs font-black scale-[1.02]'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="w-3.5 h-3.5 rounded-full shrink-0 border border-slate-300 shadow-2xs" style={{ backgroundColor: item.colorDot }} />
+                      <span className="truncate">{item.label}</span>
+                    </div>
+                    {bgColor === item.id && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Theme Color Choice (Envelope Accent) */}
+            <div>
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 mb-2">
+                <Sparkles className="w-4 h-4 text-rose-500" />
                 Tom de Cor do Envelope/Borda:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -453,7 +524,8 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
               onChange={e => setMessage(e.target.value)}
               rows={5}
               placeholder="Escreva aqui tudo o que sente no seu coração..."
-              className={`w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-base focus:ring-2 focus:ring-rose-400 focus:outline-none ${getFontPreviewClass(fontFamily)} ${getFontColorPreviewClass(fontColor)}`}
+              className={`w-full p-4 rounded-xl border text-base focus:ring-2 focus:ring-rose-400 focus:outline-none transition-all ${getFontPreviewClass(fontFamily)} ${getBgColorClass(bgColor)}`}
+              style={getFontColorStyle(fontColor)}
               required
             />
           </div>
@@ -591,6 +663,7 @@ export const NewLoveLetterModal: React.FC<NewLoveLetterModalProps> = ({
             fontFamily,
             themeColor,
             fontColor,
+            bgColor,
             moodEmoji,
             sealIcon,
             photoUrl: photoUrl.trim() || undefined,

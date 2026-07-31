@@ -64,7 +64,25 @@ export const LoveLetterModal: React.FC<LoveLetterModalProps> = ({
     }
   };
 
-  // Font color helper
+  // Font color helper style
+  const getFontColorStyle = (): React.CSSProperties => {
+    switch (letter.fontColor) {
+      case 'white': return { color: '#ffffff' };
+      case 'black': return { color: '#000000' };
+      case 'crimson': return { color: '#9f1239' };
+      case 'sepia': return { color: '#582f0e' };
+      case 'purple': return { color: '#581c87' };
+      case 'gold': return { color: '#854d0e' };
+      case 'midnight': return { color: '#0f172a' };
+      case 'rose': return { color: '#be123c' };
+      case 'charcoal': return { color: '#334155' };
+      case 'emerald': return { color: '#065f46' };
+      case 'navy': return { color: '#1e3a8a' };
+      default: return {};
+    }
+  };
+
+  // Font color helper class
   const getFontColorClass = () => {
     switch (letter.fontColor) {
       case 'crimson': return 'text-letter-crimson dark:text-rose-300';
@@ -74,14 +92,43 @@ export const LoveLetterModal: React.FC<LoveLetterModalProps> = ({
       case 'midnight': return 'text-letter-midnight dark:text-slate-100';
       case 'rose': return 'text-letter-rose dark:text-pink-300';
       case 'charcoal': return 'text-letter-charcoal dark:text-slate-200';
+      case 'white': return 'text-white';
+      case 'black': return 'text-slate-950';
+      case 'emerald': return 'text-emerald-800 dark:text-emerald-300';
+      case 'navy': return 'text-blue-900 dark:text-blue-200';
       default:
         if (letter.paperStyle === 'parchment') return 'text-amber-950 dark:text-amber-100';
         return 'text-slate-900 dark:text-white';
     }
   };
 
-  // Helper styles based on letter paper
+  // Helper styles based on letter paper & background color
   const getPaperStyles = () => {
+    if (letter.bgColor) {
+      switch (letter.bgColor) {
+        case 'white':
+          return 'bg-white text-slate-900 border-slate-300 shadow-2xl animate-unfold';
+        case 'dark_black':
+          return 'bg-slate-950 text-white border-amber-500/80 shadow-2xl animate-unfold';
+        case 'rose_pink':
+          return 'bg-linear-to-b from-rose-100 via-pink-100 to-rose-200 text-slate-900 border-rose-300 shadow-2xl animate-unfold';
+        case 'romantic_red':
+          return 'bg-linear-to-b from-rose-900 via-red-900 to-rose-950 text-white border-rose-500 shadow-2xl animate-unfold';
+        case 'lavender_purple':
+          return 'bg-linear-to-b from-purple-100 via-indigo-100 to-purple-200 text-slate-900 border-purple-300 shadow-2xl animate-unfold';
+        case 'golden_amber':
+          return 'bg-linear-to-b from-amber-100 via-yellow-100 to-amber-200 text-amber-950 border-amber-400 shadow-2xl animate-unfold';
+        case 'emerald_green':
+          return 'bg-linear-to-b from-teal-900 via-emerald-900 to-slate-900 text-white border-teal-400 shadow-2xl animate-unfold';
+        case 'midnight_blue':
+          return 'bg-linear-to-b from-slate-900 via-indigo-950 to-slate-950 text-white border-indigo-400 shadow-2xl animate-unfold';
+        case 'sweet_peach':
+          return 'bg-linear-to-b from-orange-100 via-amber-100 to-rose-100 text-slate-900 border-orange-300 shadow-2xl animate-unfold';
+        case 'vintage_parchment':
+        default:
+          return 'bg-parchment text-amber-950 border-amber-400/80 dark:border-amber-700 shadow-2xl animate-unroll-parchment';
+      }
+    }
     switch (letter.paperStyle) {
       case 'parchment':
         return 'bg-parchment text-amber-950 border-amber-400/80 dark:border-amber-700 shadow-2xl animate-unroll-parchment';
@@ -385,7 +432,10 @@ export const LoveLetterModal: React.FC<LoveLetterModalProps> = ({
             )}
 
             {/* Main Message Content with Font Styling & Selected Color */}
-            <div className={`p-6 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/50 dark:border-slate-800 shadow-inner ${getFontClass()} ${getFontColorClass()}`}>
+            <div
+              className={`p-6 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/50 dark:border-slate-800 shadow-inner ${getFontClass()} ${getFontColorClass()}`}
+              style={getFontColorStyle()}
+            >
               <p className="whitespace-pre-wrap">{letter.message}</p>
             </div>
 
