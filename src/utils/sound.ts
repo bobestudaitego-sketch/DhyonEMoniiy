@@ -138,6 +138,36 @@ class SoundManager {
     }
   }
 
+  // Play a triumphant wedding & fanfare chime for proposal acceptances
+  playWeddingChimes() {
+    try {
+      const ctx = this.getAudioContext();
+      const now = ctx.currentTime;
+      const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // C Major arpeggio crescendo C4 to C6
+
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const offset = now + i * 0.12;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, offset);
+
+        gain.gain.setValueAtTime(0.001, offset);
+        gain.gain.linearRampToValueAtTime(0.2, offset + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, offset + 1.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(offset);
+        osc.stop(offset + 1.25);
+      });
+    } catch {
+      // Audio context fallthrough
+    }
+  }
+
   // Toggle ambient calming drone (432Hz harmonic soft waves)
   toggleAmbientSound(): boolean {
     try {

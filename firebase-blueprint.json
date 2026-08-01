@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "scheduleItems": {
+      "title": "Schedule Items",
+      "description": "Schedule events, routines, and medications shared between Dhyon and Mooniy",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "completedAt": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "linkUrl": { "type": "string" },
+        "musicUrl": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdByRole": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "important": { "type": "boolean" },
+        "recurring": { "type": "string" },
+        "colorTag": { "type": "string" },
+        "medicalNote": { "type": "string" }
+      },
+      "required": ["title", "category", "date", "completed", "createdBy", "createdAt"]
+    },
+    "journalEntries": {
+      "title": "Journal Entries",
+      "description": "Daily communication and feeling logs between Dhyon and Mooniy",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorType": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorRole": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "feelingMood": { "type": "string" },
+        "expectationsTag": { "type": "string" },
+        "readByOther": { "type": "boolean" },
+        "replies": { "type": "array" }
+      },
+      "required": ["authorName", "authorRole", "title", "content", "date", "time"]
+    },
+    "loveLetters": {
+      "title": "Love Letters",
+      "description": "Romantic letters, voice notes, photos and parchment notes between Dhyon and Mooniy",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "recipientRole": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "paperStyle": { "type": "string" },
+        "fontFamily": { "type": "string" },
+        "themeColor": { "type": "string" },
+        "fontColor": { "type": "string" },
+        "bgColor": { "type": "string" },
+        "moodEmoji": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "audioUrl": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "date": { "type": "string" },
+        "read": { "type": "boolean" },
+        "sealIcon": { "type": "string" }
+      },
+      "required": ["senderName", "recipientName", "title", "message", "createdAt"]
+    },
+    "treasureHuntState": {
+      "title": "Treasure Hunt State",
+      "description": "Synchronized treasure hunt stage progress, game URL and custom messages",
+      "type": "object",
+      "properties": {
+        "currentStageIndex": { "type": "number" },
+        "isProposalAccepted": { "type": "boolean" },
+        "proposalMessage": { "type": "string" },
+        "gameUrl": { "type": "string" },
+        "openedChests": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["currentStageIndex", "gameUrl"]
+    },
+    "privateNotes": {
+      "title": "Private Notes",
+      "description": "Personal agenda and private notes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerProfileId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "category": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "colorTag": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["ownerProfileId", "title", "createdAt"]
+    }
+  }
+}

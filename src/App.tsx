@@ -11,6 +11,7 @@ import { MusicSection } from './components/MusicSection';
 import { GallerySection } from './components/GallerySection';
 import { CaregiverJournal } from './components/CaregiverJournal';
 import { LoveLettersSection } from './components/LoveLettersSection';
+import { TreasureHuntSection } from './components/TreasureHuntSection';
 import { LoveLetterModal } from './components/LoveLetterModal';
 import { PrivateAgendaModal } from './components/PrivateAgendaModal';
 import { AddItemModal } from './components/AddItemModal';
@@ -21,6 +22,21 @@ import { ReminderNotifier } from './components/ReminderNotifier';
 import { HeartParticles } from './components/HeartParticles';
 import { soundManager } from './utils/sound';
 import { Calendar, Pill, Globe, Music, Image as ImageIcon, HeartHandshake, ShieldCheck, Sparkles, BookOpen, Heart, Mail, ChevronLeft, ChevronRight, StickyNote, Lock } from 'lucide-react';
+import {
+  subscribeScheduleItems,
+  saveScheduleItemToCloud,
+  deleteScheduleItemFromCloud,
+  subscribeJournalEntries,
+  saveJournalEntryToCloud,
+  deleteJournalEntryFromCloud,
+  subscribeLoveLetters,
+  saveLoveLetterToCloud,
+  deleteLoveLetterFromCloud,
+  subscribePrivateNotes,
+  savePrivateNoteToCloud,
+  deletePrivateNoteFromCloud,
+  clearAllCloudPosts
+} from './lib/firestoreSync';
 
 export default function App() {
   // Local storage keys
@@ -168,7 +184,7 @@ export default function App() {
 
   // Active view state
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
-  const [activeTab, setActiveTab] = useState<'schedule' | 'medication' | 'websites' | 'music' | 'gallery' | 'journal' | 'letters'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'medication' | 'websites' | 'music' | 'gallery' | 'journal' | 'letters' | 'treasure'>('schedule');
 
   // Modals & Overlay state
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
@@ -222,7 +238,33 @@ export default function App() {
     navTabsRef.current.scrollBy({ left: amount, behavior: 'smooth' });
   };
 
-  // Sync to localStorage
+  // Realtime Firestore Subscriptions
+  useEffect(() => {
+    const unsubscribeItems = subscribeScheduleItems((cloudItems) => {
+      setItems(cloudItems);
+    }, INITIAL_SCHEDULE_ITEMS);
+
+    const unsubscribeJournal = subscribeJournalEntries((cloudJournal) => {
+      setJournalEntries(cloudJournal);
+    }, INITIAL_JOURNAL_ENTRIES);
+
+    const unsubscribeLetters = subscribeLoveLetters((cloudLetters) => {
+      setLoveLetters(cloudLetters);
+    }, INITIAL_LOVE_LETTERS);
+
+    const unsubscribeNotes = subscribePrivateNotes((cloudNotes) => {
+      setPrivateNotes(cloudNotes);
+    }, []);
+
+    return () => {
+      unsubscribeItems();
+      unsubscribeJournal();
+      unsubscribeLetters();
+      unsubscribeNotes();
+    };
+  }, []);
+
+  // Sync to localStorage as backup
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_ITEMS_KEY, JSON.stringify(items));
@@ -269,15 +311,19 @@ export default function App() {
       ownerProfileId: currentProfile.id,
       createdAt: new Date().toISOString()
     };
-    setPrivateNotes(prev => [newNote, ...prev]);
+    savePrivateNoteToCloud(newNote);
   };
 
   const handleToggleCompletePrivateNote = (id: string) => {
-    setPrivateNotes(prev => prev.map(n => n.id === id ? { ...n, completed: !n.completed } : n));
+    const updated = privateNotes.find(n => n.id === id);
+    if (updated) {
+      const newNote = { ...updated, completed: !updated.completed };
+      savePrivateNoteToCloud(newNote);
+    }
   };
 
   const handleDeletePrivateNote = (id: string) => {
-    setPrivateNotes(prev => prev.filter(n => n.id !== id));
+    deletePrivateNoteFromCloud(id);
   };
 
   // Auto trigger letter popup when opening app or switching profile if there's an unread letter for current user
@@ -298,7 +344,7 @@ export default function App() {
       read: false
     };
 
-    setLoveLetters(prev => [newLetter, ...prev]);
+    saveLoveLetterToCloud(newLetter);
     setRecentChangeNotice({
       message: `Nova carta de amor enviada para ${letterData.recipientName}! 💌`,
       type: 'letters',
@@ -307,11 +353,14 @@ export default function App() {
   };
 
   const handleMarkLoveLetterRead = (letterId: string) => {
-    setLoveLetters(prev => prev.map(l => l.id === letterId ? { ...l, read: true, openedAt: new Date().toISOString() } : l));
+    const letter = loveLetters.find(l => l.id === letterId);
+    if (letter) {
+      saveLoveLetterToCloud({ ...letter, read: true });
+    }
   };
 
   const handleDeleteLoveLetter = (letterId: string) => {
-    setLoveLetters(prev => prev.filter(l => l.id !== letterId));
+    deleteLoveLetterFromCloud(letterId);
     setRecentChangeNotice({
       message: `Uma carta de amor foi apagada por ${currentProfile.name}. 🗑️`,
       type: 'letters',
@@ -324,16 +373,15 @@ export default function App() {
   };
 
   const handleToggleComplete = (itemId: string) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        return {
-          ...item,
-          completed: !item.completed,
-          completedAt: !item.completed ? new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : undefined
-        };
-      }
-      return item;
-    }));
+    const targetItem = items.find(i => i.id === itemId);
+    if (targetItem) {
+      const updatedItem: ScheduleItem = {
+        ...targetItem,
+        completed: !targetItem.completed,
+        completedAt: !targetItem.completed ? new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : undefined
+      };
+      saveScheduleItemToCloud(updatedItem);
+    }
   };
 
   const handleAddItem = (newItemData: Omit<ScheduleItem, 'id' | 'createdAt'>) => {
@@ -342,7 +390,7 @@ export default function App() {
       id: `item-${Date.now()}`,
       createdAt: new Date().toISOString()
     };
-    setItems(prev => [newItem, ...prev]);
+    saveScheduleItemToCloud(newItem);
     setRecentChangeNotice({
       message: `Nova tarefa "${newItemData.title}" adicionada à rotina por ${currentProfile.name}! 📅`,
       type: 'schedule',
@@ -351,7 +399,7 @@ export default function App() {
   };
 
   const handleDeleteItem = (itemId: string) => {
-    setItems(prev => prev.filter(i => i.id !== itemId));
+    deleteScheduleItemFromCloud(itemId);
     setRecentChangeNotice({
       message: `Uma tarefa foi excluída da rotina por ${currentProfile.name}. 🗑️`,
       type: 'schedule',
@@ -383,7 +431,7 @@ export default function App() {
       readByOther: false,
       replies: []
     };
-    setJournalEntries(prev => [newEntry, ...prev]);
+    saveJournalEntryToCloud(newEntry);
     setRecentChangeNotice({
       message: `Novo registro postado no Diário por ${currentProfile.name}! 📓`,
       type: 'journal',
@@ -392,57 +440,52 @@ export default function App() {
   };
 
   const handleToggleJournalRead = (entryId: string) => {
-    setJournalEntries(prev => prev.map(e => {
-      if (e.id === entryId) {
-        return { ...e, readByOther: !e.readByOther };
-      }
-      return e;
-    }));
+    const target = journalEntries.find(e => e.id === entryId);
+    if (target) {
+      saveJournalEntryToCloud({ ...target, readByOther: !target.readByOther });
+    }
   };
 
   const handleAddJournalReply = (entryId: string, replyText: string) => {
-    const newReply = {
-      id: `reply-${Date.now()}`,
-      authorName: currentProfile.name,
-      authorRole: currentProfile.role,
-      text: replyText,
-      createdAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setJournalEntries(prev => prev.map(e => {
-      if (e.id === entryId) {
-        return {
-          ...e,
-          replies: [...(e.replies || []), newReply]
-        };
-      }
-      return e;
-    }));
-
-    setRecentChangeNotice({
-      message: `Nova resposta adicionada ao Diário por ${currentProfile.name}! 💬`,
-      type: 'journal',
-      author: currentProfile.name
-    });
+    const target = journalEntries.find(e => e.id === entryId);
+    if (target) {
+      const newReply = {
+        id: `reply-${Date.now()}`,
+        authorName: currentProfile.name,
+        authorRole: currentProfile.role,
+        text: replyText,
+        createdAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+      const updatedEntry = {
+        ...target,
+        replies: [...(target.replies || []), newReply]
+      };
+      saveJournalEntryToCloud(updatedEntry);
+      setRecentChangeNotice({
+        message: `Nova resposta adicionada ao Diário por ${currentProfile.name}! 💬`,
+        type: 'journal',
+        author: currentProfile.name
+      });
+    }
   };
 
   const handleDeleteJournalEntry = (entryId: string) => {
-    setJournalEntries(prev => prev.filter(e => e.id !== entryId));
+    deleteJournalEntryFromCloud(entryId);
   };
 
   const handleDeleteJournalReply = (entryId: string, replyId: string) => {
-    setJournalEntries(prev => prev.map(e => {
-      if (e.id === entryId) {
-        return {
-          ...e,
-          replies: (e.replies || []).filter(r => r.id !== replyId)
-        };
-      }
-      return e;
-    }));
+    const target = journalEntries.find(e => e.id === entryId);
+    if (target) {
+      const updatedEntry = {
+        ...target,
+        replies: (target.replies || []).filter(r => r.id !== replyId)
+      };
+      saveJournalEntryToCloud(updatedEntry);
+    }
   };
 
   const handleClearAllPosts = () => {
+    clearAllCloudPosts();
     setItems([]);
     setJournalEntries([]);
     try {
@@ -745,6 +788,21 @@ export default function App() {
                 return null;
               })()}
             </button>
+
+            <button
+              onClick={() => setActiveTab('treasure')}
+              className={`px-4.5 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 shrink-0 transition-all duration-300 cursor-pointer ${
+                activeTab === 'treasure'
+                  ? 'bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 text-slate-950 shadow-xl scale-[1.05] border-2 border-amber-300'
+                  : 'bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-pink-500/10 text-rose-700 dark:text-rose-300 border-2 border-amber-400/40 hover:border-amber-400 hover:scale-[1.05] active:scale-[0.97] hover:shadow-md'
+              }`}
+            >
+              <Sparkles className="w-4.5 h-4.5 text-amber-500 animate-spin" style={{ animationDuration: '5s' }} />
+              🗺️ Caça ao Tesouro Secreta 💎
+              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black animate-bounce shadow-2xs">
+                ✨ ESPECIAL
+              </span>
+            </button>
           </div>
 
           {/* Scroll Right Button */}
@@ -759,6 +817,13 @@ export default function App() {
         </div>
 
         {/* Tab View Content */}
+        {activeTab === 'treasure' && (
+          <TreasureHuntSection
+            currentProfile={currentProfile}
+            speechEnabled={settings.speechEnabled}
+          />
+        )}
+
         {activeTab === 'letters' && (
           <LoveLettersSection
             letters={loveLetters}
